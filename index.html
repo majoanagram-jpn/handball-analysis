@@ -262,7 +262,10 @@ body{
 <h2>2. 選手登録</h2>
 <div class="player-grid">
   <div class="team-box">
-    <h3>自チーム</h3>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">自チーム</h3>
+      <button type="button" class="small danger" onclick="clearTeamPlayers('home')">自チームを一括削除</button>
+    </div>
     <div class="row">
       <div class="field"><label>背番号</label><input id="myNo" type="number" min="0"></div>
       <div class="field wide"><label>氏名</label><input id="myName"></div>
@@ -272,7 +275,10 @@ body{
     <div class="scroll"><table><thead><tr><th>番号</th><th>氏名</th><th>位置</th><th></th></tr></thead><tbody id="homePlayers"></tbody></table></div>
   </div>
   <div class="team-box">
-    <h3>相手チーム</h3>
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0">相手チーム</h3>
+      <button type="button" class="small danger" onclick="clearTeamPlayers('away')">相手チームを一括削除</button>
+    </div>
     <div class="row">
       <div class="field"><label>背番号</label><input id="oppNo" type="number" min="0"></div>
       <div class="field wide"><label>氏名</label><input id="oppName"></div>
@@ -453,7 +459,10 @@ body{
 
 </section>
 <section>
-<h2>6. イベント一覧</h2>
+<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+  <h2 style="margin:0">6. イベント一覧</h2>
+  <button type="button" class="small danger" onclick="clearAllEvents()">イベント一覧を一括削除</button>
+</div>
 <div class="scroll"><table><thead><tr><th>前後半</th>
 <th>時間</th>
 <th>チーム</th>
@@ -905,6 +914,28 @@ function editPlayer(id){
  save();
 
  alert("選手情報を修正しました。");
+}
+function clearTeamPlayers(side){
+ const label=side==="home"?"自チーム":"相手チーム";
+ const ids=new Set(data.players.filter(p=>p.side===side).map(p=>p.id));
+ if(ids.size===0){alert(label+"に登録された選手はいません。");return}
+ const relatedEvents=data.events.filter(e=>ids.has(e.playerId)||ids.has(e.goalkeeperId));
+ const message=
+   `${label}の登録選手 ${ids.size} 人を一括削除します。\\n`+
+   `その選手が関係するイベント ${relatedEvents.length} 件も削除されます。\\n\\n`+
+   `この操作は取り消せません。実行しますか？`;
+ if(!confirm(message))return;
+ data.events=data.events.filter(e=>!ids.has(e.playerId)&&!ids.has(e.goalkeeperId));
+ data.players=data.players.filter(p=>p.side!==side);
+ if(pendingEventId && !data.events.some(e=>e.id===pendingEventId))pendingEventId=null;
+ save();
+}
+function clearAllEvents(){
+ if(data.events.length===0){alert("削除するイベントはありません。");return}
+ if(!confirm(`イベント一覧の全 ${data.events.length} 件を一括削除します。\\n登録選手と試合情報は削除されません。\\n\\nこの操作は取り消せません。実行しますか？`))return;
+ data.events=[];
+ pendingEventId=null;
+ save();
 }
 function removePlayer(id){
  if(data.events.some(e=>e.playerId===id)){alert("この選手には記録済みイベントがあります。先にイベントを削除してください。");return}
