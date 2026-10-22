@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="ハンドボール試合分析ツールの初心者向け操作ガイド。試合登録、選手登録、試合記録、分析、保存とバックアップを説明します。">
+<title>使い方ガイド｜ハンドボール試合分析</title>
+<style>
+:root{--ink:#17202a;--muted:#5f6b76;--line:#d9dee3;--paper:#fff;--bg:#f4f6f8;--blue:#1769aa;--pale:#eaf3fb;--green:#15803d;--purple:#7b4bb7;--red:#a34a3c}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Yu Gothic",Meiryo,sans-serif;line-height:1.7}a{color:#075b98}header{background:var(--ink);color:white;padding:20px max(18px,calc((100% - 1080px)/2))}header h1{font-size:clamp(22px,3vw,30px);margin:0}header p{margin:4px 0 12px;color:#d6dce2;font-size:14px}.toplink{display:inline-block;background:white;color:var(--ink);padding:7px 12px;border-radius:7px;text-decoration:none;font-weight:700;font-size:14px}main{max-width:1080px;margin:20px auto;padding:0 16px 50px}.intro,.chapter,.warning{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:clamp(16px,3vw,26px);margin-bottom:16px}.intro{border-top:4px solid var(--blue)}h2{font-size:clamp(19px,2.5vw,24px);line-height:1.4;margin:0 0 12px}h3{font-size:17px;margin:20px 0 8px}p{margin:8px 0}ul,ol{padding-left:1.4em}li{margin:5px 0}.muted{color:var(--muted);font-size:13px}.toc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.toc a{display:block;background:#f7f9fb;border:1px solid var(--line);padding:10px 12px;border-radius:8px;text-decoration:none}.steps{counter-reset:step;list-style:none;padding:0}.steps li{counter-increment:step;display:grid;grid-template-columns:32px minmax(0,1fr);gap:10px;margin:12px 0}.steps li:before{content:counter(step);display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-weight:800}.diagram{border:1px solid #cbd5df;border-radius:10px;background:#f8fafc;padding:14px;margin:14px 0}.diagram-title{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px}.mockrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mockfield{border:1px solid #b8c3ce;background:white;border-radius:6px;padding:8px 10px;min-width:100px;flex:1}.mockfield small{display:block;color:var(--muted);font-size:11px}.mockbtn{display:inline-block;border-radius:6px;padding:8px 11px;background:var(--blue);color:white;font-size:13px;font-weight:700}.mockbtn.green{background:var(--green)}.mockbtn.purple{background:var(--purple)}.mockbtn.red{background:var(--red)}.twocol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mockteam{min-width:0;background:#fff;border:1px solid #cbd5df;border-radius:8px;padding:12px}.mockteam strong{display:block;margin-bottom:8px}.mocktable{width:100%;border-collapse:collapse;font-size:12px}.mocktable td,.mocktable th{border-bottom:1px solid #e1e6eb;text-align:left;padding:6px}.mocktable th{background:#edf1f5}.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}.flowbox{flex:1;min-width:130px;border:1px solid #b9c9d7;background:white;padding:10px;border-radius:8px;text-align:center;font-size:13px;font-weight:700}.arrow{color:var(--blue);font-size:22px;font-weight:900}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;max-width:430px;margin:10px auto}.zone{background:#eaf3fb;border:1px solid #9db9d1;text-align:center;padding:14px 4px;border-radius:5px;font-weight:700;font-size:13px}.notice{border-left:4px solid #d97706;background:#fff8e8;padding:11px 13px;border-radius:4px;margin:12px 0}.goodnote{border-left:4px solid var(--green);background:#effaf2;padding:11px 13px;border-radius:4px;margin:12px 0}.tablewrap{overflow-x:auto}.data-table{border-collapse:collapse;width:100%;font-size:14px}.data-table th,.data-table td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}.data-table th{background:#f1f4f7}.pill{display:inline-block;background:#e8eef5;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700}.backtop{display:inline-block;margin-top:10px}.foot{color:var(--muted);font-size:12px;text-align:center;padding:18px}
+@media(max-width:640px){header{padding:16px}.toc,.twocol{grid-template-columns:1fr}.chapter,.intro,.warning{padding:16px}main{padding:0 10px 32px}.flow{flex-direction:column}.flowbox{width:100%;flex:auto}.arrow{transform:rotate(90deg)}.grid3{gap:4px}.zone{padding:11px 2px}}
+</style>
+</head>
+<body id="top">
+<header>
+  <h1>ハンドボール試合分析｜使い方ガイド</h1>
+  <p>初めて使う方へ。試合の登録から分析・バックアップまでを順番に説明します。</p>
+  <a class="toplink" href="index.html">← 試合分析ツールに戻る</a>
+</header>
+<main>
+<section class="intro">
+  <h2>このガイドについて</h2>
+  <p>このページは、PC・スマートフォン共通の操作の流れを模式図で説明します。画面の配置は端末の幅によって変わりますが、基本的な機能名と手順は共通です。</p>
+  <div class="flow" aria-label="操作の流れ">
+    <div class="flowbox">① 試合情報を登録</div><div class="arrow">→</div>
+    <div class="flowbox">② 選手を登録</div><div class="arrow">→</div>
+    <div class="flowbox">③ 試合中のイベントを記録</div><div class="arrow">→</div>
+    <div class="flowbox">④ 集計・出力・保存</div>
+  </div>
+  <h3>目次</h3>
+  <nav class="toc" aria-label="目次">
+    <a href="#start">1. はじめに</a><a href="#match">2. 試合情報を登録</a>
+    <a href="#players">3. 選手を登録</a><a href="#record">4. 試合イベントを記録</a>
+    <a href="#shot">5. シュート位置・ゴールコース</a><a href="#analysis">6. 集計・イベント一覧を見る</a>
+    <a href="#export">7. Excel向けに出力</a><a href="#history">8. 試合履歴・JSON</a>
+    <a href="#storage">9. 保存とデータ管理</a><a href="#trouble">10. 困ったとき</a>
+  </nav>
+</section>
+
+<section class="chapter" id="start">
+  <h2>1. はじめに</h2>
+  <ol class="steps">
+    <li><div><strong>試合分析ツールを開く</strong><br>サイトのトップページ（index.html）を開きます。ページ上部の「使い方ガイド」から、この説明ページに移動できます。</div></li>
+    <li><div><strong>試合ごとに情報を入力する</strong><br>まず試合情報と両チームの選手を登録し、その後、試合中のイベントを記録します。</div></li>
+    <li><div><strong>記録後は試合履歴に保存する</strong><br>試合情報を入力しただけでは、過去の試合一覧に保存したことにはなりません。記録した試合を残すには「この試合を保存」を使ってください。</div></li>
+  </ol>
+  <div class="notice"><strong>注意：</strong>端末やブラウザを変えると、ブラウザ内に保存されたデータは自動で共有されません。別の端末へ移す場合はJSONファイルを使います。</div>
+</section>
+
+<section class="chapter" id="match">
+  <h2>2. 試合情報を登録する</h2>
+  <p>トップページの「1. 試合登録」で、試合の基本情報を入力します。</p>
+  <div class="diagram">
+    <div class="diagram-title">模式図：試合登録欄</div>
+    <div class="mockrow"><div class="mockfield"><small>自チーム</small>例：○○高校</div><div class="mockfield"><small>相手チーム</small>例：△△高校</div></div>
+    <div class="mockrow" style="margin-top:8px"><div class="mockfield"><small>日付</small>試合日</div><div class="mockfield"><small>会場</small>例：○○体育館</div></div>
+    <div class="mockrow" style="margin-top:10px"><span class="mockbtn">試合情報を保存</span><span class="mockbtn green">この試合を保存</span></div>
+  </div>
+  <ol class="steps">
+    <li><div><strong>自チーム・相手チーム</strong><br>それぞれのチーム名を入力します。自チームと相手チームは、試合記録時のチーム選択にも使われます。</div></li>
+    <li><div><strong>日付・会場</strong><br>試合日を日付欄で選択し、会場名を入力します。会場は任意で入力できます。</div></li>
+    <li><div><strong>「試合情報を保存」</strong><br>入力したチーム名・日付・会場を現在の試合データに反映します。</div></li>
+    <li><div><strong>「この試合を保存」</strong><br>現在の試合データを「過去の試合」に保存します。記録を終えたあとや、区切りのよいタイミングで実行してください。同じ試合を再保存すると、同じ履歴項目を更新します。</div></li>
+  </ol>
+</section>
+
+<section class="chapter" id="players">
+  <h2>3. 選手を登録する</h2>
+  <p>「2. 選手登録」で、自チームと相手チームをそれぞれ登録します。PCでは左右に、画面が狭い端末では上下に並ぶ場合があります。</p>
+  <div class="diagram">
+    <div class="diagram-title">模式図：チームごとの登録枠</div>
+    <div class="twocol">
+      <div class="mockteam"><strong>自チーム</strong><div class="mockrow"><div class="mockfield"><small>背番号</small>7</div><div class="mockfield"><small>氏名</small>選手名</div></div><div class="mockfield" style="margin-top:7px"><small>位置</small>LW / GK など</div><p><span class="mockbtn">登録</span></p><table class="mocktable"><tr><th>番号</th><th>氏名</th><th>位置</th></tr><tr><td>7</td><td>選手名</td><td>LW</td></tr></table></div>
+      <div class="mockteam"><strong>相手チーム</strong><div class="mockrow"><div class="mockfield"><small>背番号</small>9</div><div class="mockfield"><small>氏名</small>選手名</div></div><div class="mockfield" style="margin-top:7px"><small>位置</small>LW / GK など</div><p><span class="mockbtn">登録</span></p><table class="mocktable"><tr><th>番号</th><th>氏名</th><th>位置</th></tr><tr><td>9</td><td>選手名</td><td>GK</td></tr></table></div>
+    </div>
+  </div>
+  <ol class="steps">
+    <li><div><strong>背番号を入力</strong><br>登録する選手の背番号を入力します。</div></li>
+    <li><div><strong>氏名を入力</strong><br>選手名を入力します。</div></li>
+    <li><div><strong>位置を入力</strong><br>位置は自由入力欄です。例として「LW」「RW」「CB」「PV」「GK」など、チーム内で統一した表記を使います。GK別集計に反映させる場合は、位置を「GK」と入力してください。</div></li>
+    <li><div><strong>正しいチーム枠の「登録」を押す</strong><br>自チームの選手は自チーム枠、相手選手は相手チーム枠から登録します。登録後は一覧に表示されます。</div></li>
+    <li><div><strong>修正・削除</strong><br>登録済みの選手一覧には編集・削除の操作があります。入力間違いがあれば一覧から修正してください。選手を削除すると、その選手に紐づく過去イベントの表示に影響する場合があるため、試合記録後の削除は慎重に行ってください。</div></li>
+  </ol>
+</section>
+
+<section class="chapter" id="record">
+  <h2>4. 試合中のイベントを記録する</h2>
+  <p>「3. 試合記録」で、記録するイベントの対象と時間を設定してから、該当するボタンを押します。</p>
+  <div class="diagram">
+    <div class="diagram-title">模式図：記録前に選択する項目</div>
+    <div class="mockrow"><div class="mockfield"><small>記録対象</small>自チーム / 相手チーム</div><div class="mockfield"><small>選手</small>登録選手から選択</div></div>
+    <div class="mockrow" style="margin-top:8px"><div class="mockfield"><small>キーパー</small>シュート時に選択</div><div class="mockfield"><small>前後半</small>前半 / 後半</div><div class="mockfield"><small>時間</small>例：12:34</div></div>
+    <p style="margin:12px 0 5px;font-weight:700">シュート結果</p>
+    <div class="mockrow"><span class="mockbtn purple">得点</span><span class="mockbtn purple">GKセーブ</span><span class="mockbtn purple">枠外</span></div>
+    <div class="mockrow" style="margin-top:7px"><span class="mockbtn red">ミス</span><span class="mockbtn red">ファール</span><span class="mockbtn red">ターンオーバー</span><span class="mockbtn">7m獲得</span></div>
+    <div class="mockrow" style="margin-top:7px"><span class="mockbtn red">警告</span><span class="mockbtn red">退場</span><span class="mockbtn">チームタイムアウト</span></div>
+  </div>
+  <ol class="steps">
+    <li><div><strong>記録対象チームを選ぶ</strong><br>「自チーム」または「相手チーム」を選びます。</div></li>
+    <li><div><strong>選手を選ぶ</strong><br>登録済み選手から、イベントを記録する選手を選びます。選手が未登録、または未選択の場合は記録できません。</div></li>
+    <li><div><strong>シュートイベントではキーパーも選ぶ</strong><br>「得点」「GKセーブ」「枠外」を記録するときは、シュートを受けたキーパーの選択が必要です。先に両チームのGKを「GK」として登録しておくと便利です。</div></li>
+    <li><div><strong>前後半・時間を設定</strong><br>前半／後半を選び、時間欄に試合時間を入力します。例は「12:34」です。時間はイベントを記録する前に設定してください。</div></li>
+    <li><div><strong>該当するイベントボタンを押す</strong><br>シュート結果、ミス、ファール、ターンオーバー、7m獲得、警告、退場、チームタイムアウトなどから選びます。登録したイベントは「イベント一覧」に反映されます。</div></li>
+  </ol>
+  <div class="notice"><strong>記録ミスに気づいたら：</strong>イベント一覧で該当する行を確認し、編集・削除操作を利用してください。イベントの編集では、チーム・選手・種別・時間などを見直します。</div>
+</section>
+
+<section class="chapter" id="shot">
+  <h2>5. シュート位置・ゴールコースを登録する</h2>
+  <h3>シュート位置</h3>
+  <ol class="steps">
+    <li><div>まず「3. 試合記録」で「得点」「GKセーブ」「枠外」のいずれかを記録します。</div></li>
+    <li><div>「4. シュート位置」のコート図をクリックします。クリックした位置が、そのシュートの位置として登録されます。</div></li>
+    <li><div>「位置登録待ち」の表示を確認します。位置を登録しない場合や操作を取り消す場合は「キャンセル」を使います。</div></li>
+  </ol>
+  <div class="diagram"><div class="diagram-title">模式図：コート上の位置を選択</div><div style="max-width:500px;margin:auto;border:3px solid #7c9c78;border-radius:10px;background:#eaf4e7;padding:20px 12px"><div style="height:130px;border:2px solid #91ae8d;border-radius:50%;display:grid;place-items:center;color:#52734d;font-weight:700;background:linear-gradient(90deg,transparent 49.5%,#91ae8d 49.5%,#91ae8d 50.5%,transparent 50.5%)">コート図をクリック</div><p class="muted" style="text-align:center">実際のコート画像上でシュート位置を指定します。</p></div></div>
+  <h3>ゴールコース</h3>
+  <p>シュートイベントを選択している状態で、9分割されたゴールコースのボタンを選びます。</p>
+  <div class="diagram"><div class="diagram-title">模式図：ゴールの9分割</div><div class="grid3"><div class="zone">左上</div><div class="zone">中上</div><div class="zone">右上</div><div class="zone">左中</div><div class="zone">中央</div><div class="zone">右中</div><div class="zone">左下</div><div class="zone">中下</div><div class="zone">右下</div></div><p class="muted">自チーム選手は左ゴール、相手チーム選手は右ゴールとして扱われます。</p></div>
+  <div class="goodnote">シュート位置とゴールコースは別々の記録です。コート上の位置は「どこから打ったか」、ゴールコースは「ゴールのどこを狙ったか」を示します。</div>
+</section>
+
+<section class="chapter" id="analysis">
+  <h2>6. 集計・イベント一覧を見る</h2>
+  <h3>シュート分布</h3>
+  <p>登録したシュート位置をコート上にまとめて表示します。「チーム」「選手」「キーパー」「結果」の条件で絞り込めます。下部にはシュート位置の3×3分布も表示されます。位置を登録していないシュートは、位置図の分析対象にならないことがあります。</p>
+  <h3>イベント一覧</h3>
+  <p>記録したイベントを一覧で確認します。前後半、時間、チーム、選手、GK、イベント種別、コート位置、ゴール位置などを確認し、必要に応じて編集・削除します。</p>
+  <h3>選手別集計</h3>
+  <p>選手ごとの得点、シュート、成功率、セーブ、枠外、ミス、ファール、ターンオーバー、7mなどを確認できます。「表示チーム」で自チーム・相手チームの表示を切り替え、「並び替え項目」と「昇順／降順」で一覧の順序を変えられます。背番号0の選手は選手別集計には表示されません。</p>
+  <h3>GK別集計</h3>
+  <p>位置を「GK」として登録した選手について、被シュート、セーブ、失点、枠外、セーブ率を集計します。シュートイベントの登録時に正しいGKを選んでください。</p>
+</section>
+
+<section class="chapter" id="export">
+  <h2>7. Excel向けに出力する</h2>
+  <p>「8. Excel向け出力」では、記録をコピーしたり、TSVファイルとして保存したりできます。</p>
+  <div class="diagram"><div class="diagram-title">出力ボタン</div><div class="mockrow"><span class="mockbtn">全データをコピー</span><span class="mockbtn">イベント一覧をコピー</span><span class="mockbtn">選手別集計をコピー</span><span class="mockbtn green">TSVファイル保存</span></div></div>
+  <div class="tablewrap"><table class="data-table"><thead><tr><th>操作</th><th>用途</th></tr></thead><tbody>
+    <tr><td>全データをコピー</td><td>試合情報、イベント一覧、選手別集計をまとめてコピーします。</td></tr>
+    <tr><td>イベント一覧をコピー</td><td>イベント記録の表をコピーします。</td></tr>
+    <tr><td>選手別集計をコピー</td><td>選手別の集計表をコピーします。</td></tr>
+    <tr><td>TSVファイル保存</td><td>Excelなどの表計算ソフトで扱えるTSVファイルをダウンロードします。</td></tr>
+  </tbody></table></div>
+  <p>コピー操作のあと、Excelなどを開いて貼り付けます。ファイル保存を使った場合は、ダウンロードされたTSVファイルを表計算ソフトで開いてください。</p>
+</section>
+
+<section class="chapter" id="history">
+  <h2>8. 試合履歴・JSONの使い方</h2>
+  <p>「過去の試合」には、保存済みの試合が一覧表示されます。試合を履歴に残すには、試合画面の「この試合を保存」を実行してください。</p>
+  <h3>各操作の違い</h3>
+  <div class="tablewrap"><table class="data-table"><thead><tr><th>操作</th><th>何をするか</th><th>注意点</th></tr></thead><tbody>
+    <tr><td>参照</td><td>履歴に保存した試合を現在の画面に読み込みます。</td><td>現在編集中の試合データは置き換えられます。確認メッセージをよく読んでください。</td></tr>
+    <tr><td>JSON書き出し</td><td>その行の1試合だけをJSONファイルに保存します。</td><td>他の試合履歴は含まれません。</td></tr>
+    <tr><td>全試合をJSON保存</td><td>試合履歴と現在の試合データをまとめてバックアップします。</td><td>定期的に別の場所へコピーしておくと安心です。</td></tr>
+    <tr><td>JSON復元（上書き）</td><td>選択したJSONの試合履歴で、現在の履歴を置き換えます。</td><td>今ある履歴を残したい場合は使わないでください。バックアップを先に取ることを推奨します。</td></tr>
+    <tr><td>JSON追加読み込み</td><td>JSON内の試合を現在の履歴へ追加します。</td><td>既存履歴と編集中の試合は上書きされません。別端末から試合を取り込む場合に便利です。</td></tr>
+    <tr><td>削除</td><td>選択した試合を履歴から削除します。</td><td>必要なら先にJSONを書き出してください。</td></tr>
+  </tbody></table></div>
+  <h3>別の端末へ1試合を移す例</h3>
+  <div class="flow"><div class="flowbox">端末A<br>過去の試合で<br>「JSON書き出し」</div><div class="arrow">→</div><div class="flowbox">JSONファイルを<br>端末Bへ送る</div><div class="arrow">→</div><div class="flowbox">端末Bで<br>「JSON追加読み込み」</div></div>
+  <ol class="steps">
+    <li><div>元の端末で対象試合を保存し、過去の試合一覧に表示させます。</div></li>
+    <li><div>対象行の「JSON書き出し」を押し、JSONファイルを保存します。</div></li>
+    <li><div>ファイルをメールやファイル共有などで移動先の端末へ送ります。</div></li>
+    <li><div>移動先で同じツールを開き、「JSON追加読み込み」を選び、受け取ったファイルを指定します。</div></li>
+    <li><div>確認メッセージを読み、追加を確定します。追加後、過去の試合一覧を確認してください。</div></li>
+  </ol>
+  <div class="notice"><strong>「復元」と「追加」の違いに注意：</strong>既存の試合履歴を残したいなら「JSON追加読み込み」を選びます。「JSON復元（上書き）」は現在の履歴を置き換えます。</div>
+</section>
+
+<section class="chapter" id="storage">
+  <h2>9. 保存とデータ管理</h2>
+  <ul>
+    <li><strong>サイトを開くことと、履歴へ保存することは別です。</strong>試合履歴に残したい試合は「この試合を保存」を使ってください。</li>
+    <li><strong>ブラウザ内のデータは端末間で自動同期されません。</strong>PCとスマートフォンの間で共有したい場合はJSONの書き出し・追加読み込みを使います。</li>
+    <li><strong>ブラウザのデータ削除に注意。</strong>ブラウザのサイトデータや保存領域を消去すると、ローカルに保存したデータが失われる可能性があります。重要な試合はJSONでバックアップしてください。</li>
+    <li><strong>JSONファイルは大切に保管してください。</strong>ファイルには試合情報や選手名・記録が含まれるため、共有先を確認してください。</li>
+    <li><strong>「全データ削除」は慎重に。</strong>実行すると、現在の試合データが削除されます。必要なデータをバックアップしてから操作してください。</li>
+  </ul>
+</section>
+
+<section class="chapter" id="trouble">
+  <h2>10. 困ったとき</h2>
+  <div class="tablewrap"><table class="data-table"><thead><tr><th>症状</th><th>確認すること</th></tr></thead><tbody>
+    <tr><td>イベントを登録できない</td><td>チームと選手が選択されているか確認します。得点・GKセーブ・枠外の場合は、キーパーも選択してください。</td></tr>
+    <tr><td>シュート位置が記録されない</td><td>先にシュートイベントを登録したか確認し、そのあとコート図をクリックします。</td></tr>
+    <tr><td>GK別集計に選手が出ない</td><td>選手登録の位置欄が「GK」になっているか確認します。</td></tr>
+    <tr><td>別端末に履歴がない</td><td>端末間で自動同期されないため、元の端末からJSONを書き出し、移動先で追加読み込みします。</td></tr>
+    <tr><td>履歴に試合が表示されない</td><td>試合画面の「この試合を保存」を押したか確認し、過去の試合欄の「試合履歴を更新」を試します。</td></tr>
+    <tr><td>JSONの読み込みに失敗する</td><td>このツールから書き出したJSONか確認します。既存履歴を守るため、復元と追加のどちらを選ぶかも確認してください。</td></tr>
+  </tbody></table></div>
+  <p class="muted">このガイドはv11の画面と機能に基づく説明です。ボタン名や画面構成が変更された場合は、ガイドも更新してください。</p>
+  <a class="toplink" href="index.html">← 試合分析ツールに戻る</a>
+  <a class="backtop" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false">ページ上部へ ↑</a>
+</section>
+<div class="foot">ハンドボール試合分析ツール｜使い方ガイド</div>
+</main>
+</body>
+</html>
