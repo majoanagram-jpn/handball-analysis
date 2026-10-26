@@ -313,7 +313,7 @@ body{
 </select>
 
 <label>時間</label>
-<input id="time" placeholder="例 12:34" style="width:100px">
+<input id="time" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" placeholder="MM:SS" aria-label="時間（分2桁：秒2桁）" style="width:100px">
 </div>
 <div class="score" id="score">0 - 0</div>
 <div class="event-grid">
@@ -326,6 +326,7 @@ body{
   <button class="negative" onclick="addEvent('miss')">ミス</button>
   <button class="negative" onclick="addEvent('foul')">ファール</button>
   <button class="negative" onclick="addEvent('turnover')">ターンオーバー</button>
+  <button class="negative" onclick="addEvent('pass_cut')">パスカット</button>
   <button onclick="addEvent('7m')">7m獲得</button>
   <button class="negative" onclick="addEvent('warning')">警告</button>
   <button class="danger" onclick="addEvent('disqualification')">退場</button>
@@ -582,6 +583,7 @@ const labels={
   miss:"ミス",
   foul:"ファール",
   turnover:"ターンオーバー",
+  pass_cut:"パスカット",
   "7m":"7m獲得",
   warning:"警告",
   disqualification:"退場",
@@ -960,6 +962,10 @@ function refreshPlayerSelect(){
  placeholder.value="";
  placeholder.textContent="選手を選択してください";
  sel.appendChild(placeholder);
+ const unknown=document.createElement("option");
+ unknown.value="__unknown__";
+ unknown.textContent="選手不明";
+ sel.appendChild(unknown);
 
  // 現在のチームの選手を追加
  const players=sortPlayersByNumber(data.players.filter(p=>p.side===side));
@@ -1005,7 +1011,7 @@ function refreshGoalkeeperSelect(){
     shooterSide==="home" ? "away" : "home";
 
   const goalkeepers=sortPlayersByNumber(data.players.filter(
-    p=>p.side===goalkeeperSide && !isZeroNumberPlayer(p)
+    p=>p.side===goalkeeperSide && String(p.pos||"").trim().toUpperCase()==="GK" && !isZeroNumberPlayer(p)
   ));
 
   goalkeepers.forEach(p=>{
@@ -1035,7 +1041,7 @@ function addEvent(type){
     document.getElementById("player").value;
 
   if(!playerId){
-    alert("選手を登録して選択してください。");
+    alert("選手または「選手不明」を選択してください。");
     return;
   }
 
@@ -1074,7 +1080,7 @@ function addEvent(type){
     time:
       document.getElementById("time").value.trim(),
 
-    playerId:playerId,
+    playerId:playerId==="__unknown__" ? `unknown_${side}` : playerId,
 
     side:side,
 
@@ -1155,6 +1161,12 @@ function addEvent(type){
   }
 
   save();
+  // 種別を選択して記録したら、種別より上の入力欄を初期状態へ戻す。
+  document.getElementById("side").value="home";
+  refreshPlayerSelect();
+  refreshGoalkeeperSelect();
+  document.getElementById("period").value="前半";
+  document.getElementById("time").value="";
 }
 function courtClick(e){
  if(!pendingEventId)return;
@@ -1552,7 +1564,7 @@ if(e.side==="home"){
   });
 
 }
-function playerName(id){const p=data.players.find(p=>p.id===id);return p?p.name:"削除済み"}
+function playerName(id){if(String(id||"").startsWith("unknown_"))return "選手不明";const p=data.players.find(p=>p.id===id);return p?p.name:"削除済み"}
 function teamName(side){return side==="home"?(data.match?.team||"自チーム"):(data.match?.opponent||"相手チーム")}
 function editCourtPosition(eventId){
 
@@ -1696,7 +1708,7 @@ function editEvent(id){
 
  const typeText=prompt(
    "記録種別を入力してください。\n"+
-   "得点 / シュート成功 / GKセーブ / 枠外 / ミス / ファール / ターンオーバー / 7m獲得",
+   "得点 / シュート成功 / GKセーブ / 枠外 / ミス / ファール / ターンオーバー / パスカット / 7m獲得",
    eventName(e)
  );
 
@@ -1710,6 +1722,7 @@ function editEvent(id){
    "ミス":"miss",
    "ファール":"foul",
    "ターンオーバー":"turnover",
+   "パスカット":"pass_cut",
    "7m獲得":"7m"
  };
 
@@ -2209,6 +2222,22 @@ function clearAll(){
  data={players:[],match:null,events:[]};pendingEventId=null;localStorage.removeItem(KEY);renderAll();
 }
 document.getElementById("courtImg").addEventListener("click",courtClick);
+
+
+// 時間欄：テンキーを表示し、数字4桁を MM:SS に整形して自動で区切る。
+(function setupTimeInput(){
+ const el=document.getElementById("time");
+ if(!el)return;
+ el.addEventListener("input",()=>{
+   const digits=el.value.replace(/\D/g,"").slice(0,4);
+   if(digits.length<=2){el.value=digits;return;}
+   el.value=digits.slice(0,2)+":"+digits.slice(2);
+ });
+ el.addEventListener("blur",()=>{
+   const digits=el.value.replace(/\D/g,"").slice(0,4);
+   if(digits.length===4)el.value=digits.slice(0,2)+":"+digits.slice(2);
+ });
+})();
 
 renderAll();
 renderMatchHistory();
