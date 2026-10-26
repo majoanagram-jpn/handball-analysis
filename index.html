@@ -313,7 +313,19 @@ body{
 </select>
 
 <label>時間</label>
-<input id="time" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" placeholder="MM:SS" aria-label="時間（分2桁：秒2桁）" style="width:100px">
+<input id="time" type="text" inputmode="numeric" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" placeholder="MM:SS" aria-label="記録時間（分2桁：秒2桁）" style="width:100px">
+</div>
+<div class="modebar" id="matchTimerPanel" style="padding:10px;border:1px solid #d9dee3;border-radius:8px">
+  <strong>試合タイマー</strong>
+  <span id="timerDisplay" class="score" style="font-size:26px;margin:0 8px;font-variant-numeric:tabular-nums">00:00</span>
+  <button type="button" id="timerStartBtn" class="good" onclick="startMatchTimer()">スタート</button>
+  <button type="button" id="timerStopBtn" onclick="stopMatchTimer()">ストップ</button>
+  <button type="button" onclick="resetMatchTimer()">リセット</button>
+  <label for="timerMinutes">分</label><input id="timerMinutes" type="number" inputmode="numeric" min="0" max="999" value="0" style="width:76px">
+  <label for="timerSeconds">秒</label><input id="timerSeconds" type="number" inputmode="numeric" min="0" max="59" value="0" style="width:76px">
+  <button type="button" onclick="applyTimerCorrection()">分/秒を修正</button>
+  <button type="button" onclick="copyTimerToEventTime()">現在のタイマーを時間欄へコピー</button>
+  <span id="timerStatus" class="note">停止中</span>
 </div>
 <div class="score" id="score">0 - 0</div>
 <div class="event-grid">
@@ -1035,7 +1047,75 @@ function refreshGoalkeeperSelect(){
     sel.value="";
   }
 }
+// 試合タイマー（経過時間）。記録時間欄が空なら、種別ボタンを押した時点の値を使用する。
+let matchTimerSeconds=0;
+let matchTimerRunning=false;
+let matchTimerStartedAt=0;
+let matchTimerInterval=null;
+function getMatchTimerSeconds(){
+  if(matchTimerRunning){
+    return matchTimerSeconds + Math.max(0, Math.floor((Date.now()-matchTimerStartedAt)/1000));
+  }
+  return matchTimerSeconds;
+}
+function formatMatchTime(total){
+  const n=Math.max(0,Math.floor(Number(total)||0));
+  return String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");
+}
+function renderMatchTimer(){
+  const seconds=getMatchTimerSeconds();
+  const display=document.getElementById("timerDisplay");
+  if(display)display.textContent=formatMatchTime(seconds);
+  const mins=document.getElementById("timerMinutes");
+  const secs=document.getElementById("timerSeconds");
+  if(mins && document.activeElement!==mins)mins.value=String(Math.floor(seconds/60));
+  if(secs && document.activeElement!==secs)secs.value=String(seconds%60).padStart(2,"0");
+  const status=document.getElementById("timerStatus");
+  if(status)status.textContent=matchTimerRunning?"計測中":"停止中";
+  const start=document.getElementById("timerStartBtn");
+  if(start)start.disabled=matchTimerRunning;
+}
+function startMatchTimer(){
+  if(matchTimerRunning)return;
+  matchTimerRunning=true;
+  matchTimerStartedAt=Date.now();
+  if(matchTimerInterval)clearInterval(matchTimerInterval);
+  matchTimerInterval=setInterval(renderMatchTimer,200);
+  renderMatchTimer();
+}
+function stopMatchTimer(){
+  if(!matchTimerRunning)return;
+  matchTimerSeconds=getMatchTimerSeconds();
+  matchTimerRunning=false;
+  matchTimerStartedAt=0;
+  if(matchTimerInterval){clearInterval(matchTimerInterval);matchTimerInterval=null;}
+  renderMatchTimer();
+}
+function resetMatchTimer(){
+  stopMatchTimer();
+  matchTimerSeconds=0;
+  renderMatchTimer();
+}
+function applyTimerCorrection(){
+  const mins=document.getElementById("timerMinutes");
+  const secs=document.getElementById("timerSeconds");
+  let m=Number(mins.value), sec=Number(secs.value);
+  if(mins.value.trim()===""||secs.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(sec)||m<0||sec<0||sec>59){
+    alert("分は0以上、秒は0～59の整数で入力してください。");return;
+  }
+  matchTimerSeconds=m*60+sec;
+  if(matchTimerRunning)matchTimerStartedAt=Date.now();
+  renderMatchTimer();
+}
+function copyTimerToEventTime(){
+  document.getElementById("time").value=formatMatchTime(getMatchTimerSeconds());
+}
+
 function addEvent(type){
+
+  const eventTimeInput=document.getElementById("time");
+  // 手入力があれば優先。空欄の場合のみ、種別を選択した瞬間のタイマー値を採用。
+  if(!eventTimeInput.value.trim())eventTimeInput.value=formatMatchTime(getMatchTimerSeconds());
 
   const playerId=
     document.getElementById("player").value;
@@ -2241,6 +2321,7 @@ document.getElementById("courtImg").addEventListener("click",courtClick);
 
 renderAll();
 renderMatchHistory();
+document.addEventListener("DOMContentLoaded",renderMatchTimer);
 </script>
 
 </body>
