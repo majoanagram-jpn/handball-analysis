@@ -537,8 +537,11 @@ body{
   <button class="good" onclick="backupMatchHistory()">
     全試合をJSON保存
   </button>
-  <button class="secondary" onclick="showBackupJson()">
-    JSONを画面に表示（保存できない場合）
+  <button type="button" class="secondary" style="padding:4px 7px;font-size:12px;min-height:30px" onclick="showBackupJson()">
+    文字JSON出力
+  </button>
+  <button type="button" class="secondary" style="padding:4px 7px;font-size:12px;min-height:30px" onclick="showRestoreTextPanel()">
+    文字JSON取り込み
   </button>
 
   <label class="button" style="display:inline-block;padding:8px 12px;border-radius:6px;background:#66727e;color:#fff;cursor:pointer;">
@@ -551,6 +554,17 @@ body{
     <input type="file" accept=".json,application/json" onchange="appendMatchHistory(this.files[0]);this.value='';" style="display:none;">
   </label>
 </div>
+  <div id="restoreTextPanel" class="hidden" style="margin-top:12px;padding:10px;border:1px solid #bbb;border-radius:8px">
+    <p><strong>文字形式のJSONから復元</strong></p>
+    <p class="note">コピーしておいたJSON全文を下に貼り付けてください。復元すると現在の試合履歴・編集中データを置き換えます。</p>
+    <textarea id="restoreJsonText" spellcheck="false" placeholder="ここにJSON全文を貼り付け" style="display:block;width:100%;min-height:150px;font-family:monospace;font-size:12px;white-space:pre;box-sizing:border-box"></textarea>
+    <div class="row" style="margin-top:6px">
+      <button type="button" class="good" style="padding:4px 7px;font-size:12px;min-height:30px" onclick="restoreMatchHistoryFromText()">貼り付けたJSONを復元</button>
+      <button type="button" class="secondary" style="padding:4px 7px;font-size:12px;min-height:30px" onclick="document.getElementById('restoreTextPanel').classList.add('hidden')">閉じる</button>
+    </div>
+    <p id="restoreJsonStatus" class="note" aria-live="polite"></p>
+  </div>
+
   <div id="backupJsonPanel" class="hidden" style="margin-top:12px">
     <p><strong>バックアップ用JSON</strong></p>
     <p class="note">下の内容をすべてコピーして、メモ帳などに貼り付け、拡張子を .json にして保存してください。データが長い場合は全選択してコピーしてください。</p>
@@ -809,6 +823,39 @@ function buildBackupJson(){
     matchHistory:matchHistory
   };
   return JSON.stringify(backup,null,2);
+}
+
+function showRestoreTextPanel(){
+  const panel=document.getElementById("restoreTextPanel");
+  panel.classList.remove("hidden");
+  document.getElementById("restoreJsonStatus").textContent="JSONを貼り付けてから復元ボタンを押してください。";
+  document.getElementById("restoreJsonText").focus();
+}
+
+function restoreMatchHistoryFromText(){
+  const area=document.getElementById("restoreJsonText");
+  const status=document.getElementById("restoreJsonStatus");
+  const raw=area.value.trim();
+  if(!raw){status.textContent="JSONが入力されていません。先にJSON全文を貼り付けてください。";return;}
+  let imported;
+  try{
+    imported=normalizeImportedMatches(JSON.parse(raw));
+  }catch(error){
+    status.textContent="JSONを読み取れませんでした。全文が欠けていないか、正しいJSONか確認してください。";
+    console.error(error);
+    return;
+  }
+  if(!confirm("貼り付けたJSONで試合履歴を復元します。\n現在の試合履歴は置き換えられます。\nよろしいですか？"))return;
+  matchHistory=imported.matches.map(m=>JSON.parse(JSON.stringify(m)));
+  saveHistory();
+  if(imported.currentData){
+    data=JSON.parse(JSON.stringify(imported.currentData));
+    localStorage.setItem(KEY,JSON.stringify(data));
+  }
+  renderAll();
+  renderMatchHistory();
+  status.textContent="復元しました。試合履歴："+matchHistory.length+"試合";
+  alert("文字形式のJSONから復元しました。\n"+matchHistory.length+"試合を読み込みました。");
 }
 
 function showBackupJson(){
