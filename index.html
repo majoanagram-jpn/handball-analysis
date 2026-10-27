@@ -496,8 +496,16 @@ body{
   <h2 style="margin:0">6. イベント一覧</h2>
   <button type="button" class="small danger" onclick="clearAllEvents()">イベント一覧を一括削除</button>
 </div>
+<div class="row" style="align-items:center;margin-bottom:10px;gap:12px">
+  <label for="eventsPeriodFilter">表示期間</label>
+  <select id="eventsPeriodFilter" onchange="renderEvents()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select>
+  <span>表示時間</span>
+  <button type="button" id="eventTimeRegisteredBtn" class="good" onclick="setEventTimeMode('registered')">登録時間</button>
+  <button type="button" id="eventTimeContinuousBtn" class="secondary" onclick="setEventTimeMode('continuous')">連続時間</button>
+  <span class="note">※連続時間はイベント登録時の連続記録タイマーの値です。</span>
+</div>
 <div class="scroll"><table><thead><tr><th>前後半</th>
-<th>時間</th>
+<th id="eventTimeHeader">登録時間</th>
 <th>チーム</th>
 <th>選手</th>
 <th>GK</th>
@@ -510,12 +518,12 @@ body{
 
 <section>
 <h2>7. 選手別集計</h2>
-<div class="row" style="margin-bottom:10px"><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">枠外</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
+<div class="row" style="margin-bottom:10px"><div class="field"><label>表示期間</label><select id="statsPeriodFilter" onchange="renderStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">枠外</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
 <div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>枠外</th><th>ターンオーバー</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
 </section>
 <section>
 <h2>GK別集計</h2>
-
+<div class="row" style="align-items:center;margin-bottom:10px;gap:10px"><label for="goalkeeperStatsPeriodFilter">表示期間</label><select id="goalkeeperStatsPeriodFilter" onchange="renderGoalkeeperStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div>
 <div class="scroll">
 <table>
 <thead>
@@ -1331,6 +1339,9 @@ function addEvent(type){
     time:
       document.getElementById("time").value.trim(),
 
+    elapsedTime:
+      formatMatchTime(getElapsedTimerSeconds()),
+
     playerId:playerId==="__unknown__" ? `unknown_${side}` : playerId,
 
     side:side,
@@ -2065,51 +2076,36 @@ function renderMatch(){
  document.getElementById("venue").value=m.venue||"";
  document.getElementById("matchStatus").textContent=m.team||m.opponent?`${m.team||"自チーム"} vs ${m.opponent||"相手チーム"}　${m.date||""}　${m.venue||""}`:"未登録";
 }
+let eventTimeMode="registered";
+function setEventTimeMode(mode){
+  eventTimeMode=mode==="continuous"?"continuous":"registered";
+  const registered=document.getElementById("eventTimeRegisteredBtn");
+  const continuous=document.getElementById("eventTimeContinuousBtn");
+  if(registered){registered.className=eventTimeMode==="registered"?"good":"secondary";}
+  if(continuous){continuous.className=eventTimeMode==="continuous"?"good":"secondary";}
+  const header=document.getElementById("eventTimeHeader");
+  if(header)header.textContent=eventTimeMode==="continuous"?"連続時間":"登録時間";
+  renderEvents();
+}
 function renderEvents(){
- const tb=document.getElementById("events");tb.innerHTML="";
- const events=data.events.slice().sort((a,b)=>{
-  const periodOrder={
-    "前半":0,
-    "後半":1
-  };
-
+ const tb=document.getElementById("events");if(!tb)return;tb.innerHTML="";
+ const selectedPeriod=document.getElementById("eventsPeriodFilter")?.value||"all";
+ const events=data.events.slice().filter(e=>selectedPeriod==="all"||e.period===selectedPeriod).sort((a,b)=>{
+  const periodOrder={"前半":0,"後半":1};
   const pa=periodOrder[a.period] ?? 99;
   const pb=periodOrder[b.period] ?? 99;
-
-  if(pa!==pb){
-    return pa-pb;
-  }
-
-  function timeToSeconds(t){
-    const s=String(t||"").trim();
-
-    if(!s){
-      return Number.POSITIVE_INFINITY;
-    }
-
-    const parts=s.split(":").map(Number);
-
-    if(parts.length===2 && parts.every(Number.isFinite)){
-      return parts[0]*60+parts[1];
-    }
-
-    return Number.POSITIVE_INFINITY;
-  }
-
+  if(pa!==pb)return pa-pb;
+  function timeToSeconds(t){const s=String(t||"").trim();if(!s)return Number.POSITIVE_INFINITY;const parts=s.split(":").map(Number);if(parts.length===2&&parts.every(Number.isFinite))return parts[0]*60+parts[1];return Number.POSITIVE_INFINITY;}
   return timeToSeconds(a.time)-timeToSeconds(b.time);
-});
-
-events.forEach(e=>{
+ });
+ events.forEach(e=>{
   const tr=document.createElement("tr");
   const cp=e.x==null?"-":`${e.x}%, ${e.y}%`;
-  const gp=e.goalZone
-  ? `${getGoalRelation(e)} ${goalZoneLabels[e.goalZone]||e.goalZone}`
-  : e.gx==null
-    ? "-"
-    : `${getGoalRelation(e)} ${e.gx},${e.gy}`
+  const gp=e.goalZone?`${getGoalRelation(e)} ${goalZoneLabels[e.goalZone]||e.goalZone}`:e.gx==null?"-":`${getGoalRelation(e)} ${e.gx},${e.gy}`;
+  const shownTime=eventTimeMode==="continuous"?(e.elapsedTime||"-"):(e.time||"-");
   tr.innerHTML=`
 <td>${esc(e.period||"-")}</td>
-<td>${esc(e.time)}</td>
+<td>${esc(shownTime)}</td>
 <td>${esc(teamName(e.side))}</td>
 <td>${esc(playerName(e.playerId))}</td>
 <td>${e.goalkeeperId ? esc(playerName(e.goalkeeperId)) : "-"}</td>
@@ -2117,10 +2113,7 @@ events.forEach(e=>{
 <td>${esc(e.detail||"-")}</td>
 <td>${cp}</td>
 <td>${gp}</td>
-<td>
-  <button class="small" onclick="editEvent('${e.id}')">編集</button>
-  <button class="small danger" onclick="deleteEvent('${e.id}')">削除</button>
-</td>`;
+<td><button class="small" onclick="editEvent('${e.id}')">編集</button> <button class="small danger" onclick="deleteEvent('${e.id}')">削除</button></td>`;
   tb.appendChild(tr);
  });
 }
@@ -2132,8 +2125,9 @@ function renderScore(){
  });
  document.getElementById("score").textContent=`${h} - ${a}`;
 }
-function calc(p){
- const ev=data.events.filter(e=>e.playerId===p.id);
+function calc(p, periodOverride){
+ const periodFilter=periodOverride ?? (document.getElementById("statsPeriodFilter")?.value||"all");
+ const ev=data.events.filter(e=>e.playerId===p.id&&(periodFilter==="all"||e.period===periodFilter));
 
  const shots=ev.filter(e=>
    e.type==="shot_goal" ||
@@ -2160,7 +2154,7 @@ function getStatsSortValue(p,s,key){switch(key){case "team":return teamName(p.si
 function toggleStatsSortDirection(){statsSortDirection*=-1;const b=document.getElementById("statsSortDirection");if(b)b.textContent=statsSortDirection===1?"昇順 ↑":"降順 ↓";renderStats();}
 function getSortedStatsPlayers(){const key=document.getElementById("statsSortKey")?.value||"no";const showOwn=document.getElementById("statsShowOwn")?.checked!==false;const showOpponent=document.getElementById("statsShowOpponent")?.checked!==false;const players=data.players.filter(p=>{if(isZeroNumberPlayer(p))return false;if(p.side==="home")return showOwn;if(p.side==="away")return showOpponent;return true;});return players.slice().sort((a,b)=>{const sa=calc(a),sb=calc(b),av=getStatsSortValue(a,sa,key),bv=getStatsSortValue(b,sb,key);if(typeof av==="number"&&typeof bv==="number"){if(av!==bv)return(av-bv)*statsSortDirection;}else{const c=String(av).localeCompare(String(bv),"ja");if(c!==0)return c*statsSortDirection;}const an=Number(a.no),bn=Number(b.no);if(Number.isFinite(an)&&Number.isFinite(bn)&&an!==bn)return an-bn;return String(a.name||"").localeCompare(String(b.name||""),"ja");});}
 function renderStats(){const tb=document.getElementById("stats");if(!tb)return;tb.innerHTML="";getSortedStatsPlayers().forEach(p=>{const s=calc(p),tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(p.side))}</td><td>${esc(p.no)}</td><td>${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${s.goals}</td><td>${s.shots}</td><td>${s.rate}</td><td>${s.save}</td><td>${s.missshot}</td><td>${s.turn}</td><td>${s.seven}</td>`;tb.appendChild(tr);});}
-function renderGoalkeeperStats(){const tb=document.getElementById("goalkeeperStats");if(!tb)return;tb.innerHTML="";const goalkeepers=sortPlayersByNumber(data.players.filter(p=>(p.pos==="GK"||p.pos==="GK ")&&!isZeroNumberPlayer(p)));goalkeepers.forEach(gk=>{const shots=data.events.filter(e=>e.goalkeeperId===gk.id&&(e.type==="shot_goal"||e.type==="shot_save"||e.type==="shot_miss"));const saves=shots.filter(e=>e.type==="shot_save").length,goals=shots.filter(e=>e.type==="shot_goal").length,misses=shots.filter(e=>e.type==="shot_miss").length,rate=shots.length?(saves/shots.length*100).toFixed(1)+"%":"-";const tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(gk.side))}</td><td>${esc(gk.no||"")}</td><td>${esc(gk.name||"")}</td><td>${shots.length}</td><td>${saves}</td><td>${goals}</td><td>${misses}</td><td>${rate}</td>`;tb.appendChild(tr);});}
+function renderGoalkeeperStats(){const tb=document.getElementById("goalkeeperStats");if(!tb)return;tb.innerHTML="";const periodFilter=document.getElementById("goalkeeperStatsPeriodFilter")?.value||"all";const goalkeepers=sortPlayersByNumber(data.players.filter(p=>(p.pos==="GK"||p.pos==="GK ")&&!isZeroNumberPlayer(p)));goalkeepers.forEach(gk=>{const shots=data.events.filter(e=>e.goalkeeperId===gk.id&&(periodFilter==="all"||e.period===periodFilter)&&(e.type==="shot_goal"||e.type==="shot_save"||e.type==="shot_miss"));const saves=shots.filter(e=>e.type==="shot_save").length,goals=shots.filter(e=>e.type==="shot_goal").length,misses=shots.filter(e=>e.type==="shot_miss").length,rate=shots.length?(saves/shots.length*100).toFixed(1)+"%":"-";const tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(gk.side))}</td><td>${esc(gk.no||"")}</td><td>${esc(gk.name||"")}</td><td>${shots.length}</td><td>${saves}</td><td>${goals}</td><td>${misses}</td><td>${rate}</td>`;tb.appendChild(tr);});}
 function renderPlayers(){
   const home=document.getElementById("homePlayers");
   const away=document.getElementById("awayPlayers");
