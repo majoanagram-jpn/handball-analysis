@@ -1296,10 +1296,17 @@ function copyTimerToEventTime(){
   document.getElementById("time").value=formatMatchTime(getMatchTimerSeconds());
 }
 function stopMatchTimer() {
-  if (matchTimerInterval) {
-    clearInterval(matchTimerInterval);
-    matchTimerInterval = null;
+  if (matchTimerRunning) {
+    matchTimerSeconds = getMatchTimerSeconds();
+    matchTimerRunning = false;
+    matchTimerStartedAt = 0;
   }
+
+  renderMatchTimer();
+
+  const status = document.getElementById("timerStatus");
+  if (status) status.textContent = "停止中（ストップ）";
+}
 
   const status = document.getElementById("timerStatus");
   if (status) status.textContent = "停止中（ストップ）";
