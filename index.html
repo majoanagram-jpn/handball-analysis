@@ -321,10 +321,9 @@ body{
   <span class="note" style="display:inline-flex;align-items:center;gap:4px;border-left:1px solid #d9dee3;padding-left:10px;margin-left:4px">連続記録 <strong id="elapsedTimerDisplay" style="font-size:16px;font-variant-numeric:tabular-nums;color:#374151">00:00</strong></span>
   <button type="button" id="timerStartBtn" class="good" onclick="startMatchTimer()">スタート</button>
   <button type="button" onclick="resetMatchTimer()">リセット</button>
-  <span class="note">タイマー上限</span>
+  <span class="note">タイマー上限（スタート時に確定・リセットまで保持）</span>
   <label for="timerMinutes">分</label><input id="timerMinutes" type="number" inputmode="numeric" min="0" max="999" value="30" style="width:76px">
   <label for="timerSeconds">秒</label><input id="timerSeconds" type="number" inputmode="numeric" min="0" max="59" value="0" style="width:76px">
-  <button type="button" onclick="setTimerLimit()">上限を設定</button>
   <button type="button" id="timerCorrectionToggle" onclick="toggleTimerCorrection()">分/秒の修正</button>
   <span id="timerCorrectionPanel" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
     <label for="timerCorrectionMinutes">分</label><input id="timerCorrectionMinutes" type="number" inputmode="numeric" min="0" max="999" value="0" style="width:76px">
@@ -1163,6 +1162,7 @@ let matchTimerRunning=false;
 let matchTimerStartedAt=0;
 let matchTimerInterval=null;
 let matchTimerLimitSeconds=1800;
+let matchTimerLimitLatched=false; // スタート時に確定し、リセットまで保持
 let elapsedTimerSeconds=0;
 let elapsedTimerStartedAt=0;
 let elapsedTimerRunning=false;
@@ -1193,6 +1193,9 @@ function renderMatchTimer(){
   const secs=document.getElementById("timerSeconds");
   if(mins && document.activeElement!==mins)mins.value=String(Math.floor(matchTimerLimitSeconds/60));
   if(secs && document.activeElement!==secs)secs.value=String(matchTimerLimitSeconds%60).padStart(2,"0");
+  // スタート時に確定した上限は、リセットされるまで変更不可にして保持する。
+  if(mins)mins.disabled=matchTimerLimitLatched;
+  if(secs)secs.disabled=matchTimerLimitLatched;
   const status=document.getElementById("timerStatus");
   if(status)status.textContent=matchTimerRunning?"計測中":(seconds>=matchTimerLimitSeconds?"上限到達":"停止中");
   const start=document.getElementById("timerStartBtn");
@@ -1210,6 +1213,20 @@ function renderMatchTimer(){
   }
 }
 function startMatchTimer(){
+  // リセット後の最初のスタート時、主タイマーが00:00なら入力欄の値を上限として確定する。
+  // 確定した上限はリセットまで保持し、計測中の入力変更では変わらない。
+  if(!matchTimerLimitLatched && matchTimerSeconds===0 && !matchTimerRunning){
+    const mins=document.getElementById("timerMinutes");
+    const secs=document.getElementById("timerSeconds");
+    const m=Number(mins.value), sec=Number(secs.value);
+    if(mins.value.trim()===""||secs.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(sec)||m<0||m>999||sec<0||sec>59){
+      alert("タイマー上限は、分0～999、秒0～59の整数で入力してください。");return;
+    }
+    const limit=m*60+sec;
+    if(limit<=0){alert("タイマー上限は00:00より大きい時間にしてください。");return;}
+    matchTimerLimitSeconds=limit;
+    matchTimerLimitLatched=true;
+  }
   // 連続記録タイマーは最初のスタート時にだけ開始し、主タイマー上限後もリセットまで継続する。
   if(!elapsedTimerRunning){
     elapsedTimerRunning=true;
@@ -1229,26 +1246,8 @@ function resetMatchTimer(){
   elapsedTimerRunning=false;
   elapsedTimerSeconds=0;
   elapsedTimerStartedAt=0;
+  matchTimerLimitLatched=false;
   if(matchTimerInterval){clearInterval(matchTimerInterval);matchTimerInterval=null;}
-  renderMatchTimer();
-}
-function setTimerLimit(){
-  const mins=document.getElementById("timerMinutes");
-  const secs=document.getElementById("timerSeconds");
-  const m=Number(mins.value), sec=Number(secs.value);
-  if(mins.value.trim()===""||secs.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(sec)||m<0||m>999||sec<0||sec>59){
-    alert("タイマー上限は、分0～999、秒0～59の整数で入力してください。");return;
-  }
-  const limit=m*60+sec;
-  if(limit<=0){alert("タイマー上限は1秒以上にしてください。");return;}
-  matchTimerLimitSeconds=limit;
-  if(matchTimerRunning && getMatchTimerSeconds()>=matchTimerLimitSeconds){
-    matchTimerSeconds=matchTimerLimitSeconds;
-    matchTimerRunning=false;matchTimerStartedAt=0;
-  }else if(!matchTimerRunning && matchTimerSeconds>=matchTimerLimitSeconds){
-    matchTimerSeconds=matchTimerLimitSeconds;
-  }
-  if((matchTimerRunning||elapsedTimerRunning)&&!matchTimerInterval)matchTimerInterval=setInterval(renderMatchTimer,200);
   renderMatchTimer();
 }
 function toggleTimerCorrection(){
