@@ -242,11 +242,26 @@ body{
   max-width:100%;
   overflow-x:hidden;
 }
-  details > summary {
+details {
+  background: #fff;
+  border: 1px solid #d9dee3;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+  min-width: 0;
+}
+
+details > summary {
   cursor: pointer;
   font-weight: bold;
-  padding: 10px;
+  padding: 16px;
+  margin: -16px -16px 12px;
   list-style-position: inside;
+  border-radius: 9px;
+}
+
+details:not([open]) > summary {
+  margin-bottom: -16px;
 }
 
 details > summary:hover {
@@ -255,6 +270,12 @@ details > summary:hover {
 
 details > summary::marker {
   color: #64748b;
+}
+
+@media(max-width:600px) {
+  details { padding: 12px; border-radius: 8px; }
+  details > summary { padding: 12px; margin: -12px -12px 10px; }
+  details:not([open]) > summary { margin-bottom: -12px; }
 }
 </style>
 </head>
