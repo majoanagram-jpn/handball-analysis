@@ -335,14 +335,28 @@ body{
   <button class="shot" onclick="addEvent('shot_goal')">得点</button>
   <button class="shot" onclick="addEvent('shot_save')">GKセーブ</button>
   <button class="shot" onclick="addEvent('shot_miss')">枠外</button>
-  <button class="negative" onclick="addEvent('miss')">ミス</button>
-  <button class="negative" onclick="addEvent('foul')">ファール</button>
   <button class="negative" onclick="addEvent('turnover')">ターンオーバー</button>
   <button class="negative" onclick="addEvent('pass_cut')">パスカット</button>
   <button onclick="addEvent('7m')">7m獲得</button>
   <button class="negative" onclick="addEvent('warning')">警告</button>
   <button class="danger" onclick="addEvent('disqualification')">退場</button>
   <button onclick="addEvent('team_timeout')">チームタイムアウト</button>
+</div>
+<div class="field" style="margin-top:10px;max-width:360px">
+  <label for="eventDetail">詳細な記録（ターンオーバーの内訳・任意）</label>
+  <select id="eventDetail">
+    <option value="">詳細を選択しない</option>
+    <option value="パスミス">パスミス</option>
+    <option value="キャッチミス">キャッチミス</option>
+    <option value="オーバーステップ">オーバーステップ</option>
+    <option value="オーバータイム">オーバータイム</option>
+    <option value="イリーガルドリブル">イリーガルドリブル</option>
+    <option value="ラインクロス">ラインクロス</option>
+    <option value="チャージング">チャージング</option>
+    <option value="プッシング">プッシング</option>
+    <option value="ホールディング">ホールディング</option>
+  </select>
+  <span class="note">選択した詳細は、ターンオーバーの記録に付属して保存されます。</span>
 </div>
 <div id="eventStatus" class="status" style="margin-top:10px">シュートを記録した後、下のコートをクリックしてシュート位置を登録できます。</div>
 </section>
@@ -482,6 +496,7 @@ body{
 <th>選手</th>
 <th>GK</th>
 <th>イベント種別</th>
+<th>詳細な記録</th>
 <th>コート位置</th>
 <th>ゴール位置</th>
 <th>操作</th></tr></thead><tbody id="events"></tbody></table></div>
@@ -489,8 +504,8 @@ body{
 
 <section>
 <h2>7. 選手別集計</h2>
-<div class="row" style="margin-bottom:10px"><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">枠外</option><option value="miss">ミス</option><option value="foul">ファール</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
-<div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>枠外</th><th>ミス</th><th>ファール</th><th>ターンオーバー</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
+<div class="row" style="margin-bottom:10px"><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">枠外</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
+<div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>枠外</th><th>ターンオーバー</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
 </section>
 <section>
 <h2>GK別集計</h2>
@@ -614,14 +629,21 @@ let data=JSON.parse(
 );
 let pendingEventId=null;
 let goalSide="left";
+// 旧形式の「ミス」「ファール」は、表示・集計上「ターンオーバー」に統合する。
+if(Array.isArray(data.events)){
+  data.events.forEach(e=>{if(e.type==="miss"||e.type==="foul")e.type="turnover";if(e.type==="turnover"&&!e.detail)e.detail="";});
+}
+if(Array.isArray(matchHistory)){
+  matchHistory.forEach(m=>{const evs=m?.matchData?.events||m?.events;if(Array.isArray(evs))evs.forEach(e=>{if(e.type==="miss"||e.type==="foul")e.type="turnover";if(e.type==="turnover"&&!e.detail)e.detail="";});});
+}
 
 const labels={
   goal:"得点",
   shot_goal:"得点",
   shot_save:"GKセーブ",
   shot_miss:"枠外",
-  miss:"ミス",
-  foul:"ファール",
+  miss:"ターンオーバー",
+  foul:"ターンオーバー",
   turnover:"ターンオーバー",
   pass_cut:"パスカット",
   "7m":"7m獲得",
@@ -1247,7 +1269,8 @@ function addEvent(type){
 
     goalkeeperId:goalkeeperId,
 
-    type:type,
+    type:(type==="miss"||type==="foul") ? "turnover" : type,
+    detail:type==="turnover" ? (document.getElementById("eventDetail")?.value || "") : "",
 
     x:null,
     y:null,
@@ -1328,6 +1351,7 @@ function addEvent(type){
   refreshGoalkeeperSelect();
   document.getElementById("period").value="前半";
   document.getElementById("time").value="";
+  if(document.getElementById("eventDetail"))document.getElementById("eventDetail").value="";
 }
 function courtClick(e){
  if(!pendingEventId)return;
@@ -1869,7 +1893,7 @@ function editEvent(id){
 
  const typeText=prompt(
    "記録種別を入力してください。\n"+
-   "得点 / シュート成功 / GKセーブ / 枠外 / ミス / ファール / ターンオーバー / パスカット / 7m獲得",
+   "得点 / シュート成功 / GKセーブ / 枠外 / ターンオーバー / パスカット / 7m獲得",
    eventName(e)
  );
 
@@ -1880,8 +1904,8 @@ function editEvent(id){
    "シュート成功":"shot_goal",
    "GKセーブ":"shot_save",
    "枠外":"shot_miss",
-   "ミス":"miss",
-   "ファール":"foul",
+   "ミス":"turnover",
+   "ファール":"turnover",
    "ターンオーバー":"turnover",
    "パスカット":"pass_cut",
    "7m獲得":"7m"
@@ -1897,6 +1921,13 @@ function editEvent(id){
 e.time=time.trim();
 e.playerId=newPlayer.id;
 e.type=newType;
+if(newType==="turnover") {
+  const detailText=prompt("詳細な記録（空欄可）\nパスミス / キャッチミス / オーバーステップ / オーバータイム / イリーガルドリブル / ラインクロス / チャージング / プッシング / ホールディング", e.detail||"");
+  if(detailText===null)return;
+  const allowedDetails=["","パスミス","キャッチミス","オーバーステップ","オーバータイム","イリーガルドリブル","ラインクロス","チャージング","プッシング","ホールディング"];
+  if(!allowedDetails.includes(detailText.trim())){alert("詳細な記録の選択肢から入力してください。");return;}
+  e.detail=detailText.trim();
+}else{e.detail="";}
 
 if(isShotEvent(e)){
   editGoalkeeper(id);
@@ -2015,6 +2046,7 @@ events.forEach(e=>{
 <td>${esc(playerName(e.playerId))}</td>
 <td>${e.goalkeeperId ? esc(playerName(e.goalkeeperId)) : "-"}</td>
 <td>${esc(eventName(e))}</td>
+<td>${esc(e.detail||"-")}</td>
 <td>${cp}</td>
 <td>${gp}</td>
 <td>
@@ -2051,9 +2083,7 @@ function calc(p){
   rate:shots?(goals/shots*100).toFixed(1)+"%":"-",
   save:ev.filter(e=>e.type==="shot_save").length,
   missshot:ev.filter(e=>e.type==="shot_miss").length,
-  miss:ev.filter(e=>e.type==="miss").length,
-  foul:ev.filter(e=>e.type==="foul").length,
-  turn:ev.filter(e=>e.type==="turnover").length,
+  turn:ev.filter(e=>e.type==="turnover"||e.type==="miss"||e.type==="foul").length,
   seven:ev.filter(e=>e.type==="7m").length
  };
 }
@@ -2061,7 +2091,7 @@ let statsSortDirection=1;
 function getStatsSortValue(p,s,key){switch(key){case "team":return teamName(p.side);case "no":return Number.isFinite(Number(p.no))?Number(p.no):Infinity;case "name":return p.name||"";case "pos":return p.pos||"";case "rate":return s.shots ? Number(s.rate.replace("%","")) : -1;default:return s[key]??0;}}
 function toggleStatsSortDirection(){statsSortDirection*=-1;const b=document.getElementById("statsSortDirection");if(b)b.textContent=statsSortDirection===1?"昇順 ↑":"降順 ↓";renderStats();}
 function getSortedStatsPlayers(){const key=document.getElementById("statsSortKey")?.value||"no";const showOwn=document.getElementById("statsShowOwn")?.checked!==false;const showOpponent=document.getElementById("statsShowOpponent")?.checked!==false;const players=data.players.filter(p=>{if(isZeroNumberPlayer(p))return false;if(p.side==="home")return showOwn;if(p.side==="away")return showOpponent;return true;});return players.slice().sort((a,b)=>{const sa=calc(a),sb=calc(b),av=getStatsSortValue(a,sa,key),bv=getStatsSortValue(b,sb,key);if(typeof av==="number"&&typeof bv==="number"){if(av!==bv)return(av-bv)*statsSortDirection;}else{const c=String(av).localeCompare(String(bv),"ja");if(c!==0)return c*statsSortDirection;}const an=Number(a.no),bn=Number(b.no);if(Number.isFinite(an)&&Number.isFinite(bn)&&an!==bn)return an-bn;return String(a.name||"").localeCompare(String(b.name||""),"ja");});}
-function renderStats(){const tb=document.getElementById("stats");if(!tb)return;tb.innerHTML="";getSortedStatsPlayers().forEach(p=>{const s=calc(p),tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(p.side))}</td><td>${esc(p.no)}</td><td>${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${s.goals}</td><td>${s.shots}</td><td>${s.rate}</td><td>${s.save}</td><td>${s.missshot}</td><td>${s.miss}</td><td>${s.foul}</td><td>${s.turn}</td><td>${s.seven}</td>`;tb.appendChild(tr);});}
+function renderStats(){const tb=document.getElementById("stats");if(!tb)return;tb.innerHTML="";getSortedStatsPlayers().forEach(p=>{const s=calc(p),tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(p.side))}</td><td>${esc(p.no)}</td><td>${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${s.goals}</td><td>${s.shots}</td><td>${s.rate}</td><td>${s.save}</td><td>${s.missshot}</td><td>${s.turn}</td><td>${s.seven}</td>`;tb.appendChild(tr);});}
 function renderGoalkeeperStats(){const tb=document.getElementById("goalkeeperStats");if(!tb)return;tb.innerHTML="";const goalkeepers=sortPlayersByNumber(data.players.filter(p=>(p.pos==="GK"||p.pos==="GK ")&&!isZeroNumberPlayer(p)));goalkeepers.forEach(gk=>{const shots=data.events.filter(e=>e.goalkeeperId===gk.id&&(e.type==="shot_goal"||e.type==="shot_save"||e.type==="shot_miss"));const saves=shots.filter(e=>e.type==="shot_save").length,goals=shots.filter(e=>e.type==="shot_goal").length,misses=shots.filter(e=>e.type==="shot_miss").length,rate=shots.length?(saves/shots.length*100).toFixed(1)+"%":"-";const tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(gk.side))}</td><td>${esc(gk.no||"")}</td><td>${esc(gk.name||"")}</td><td>${shots.length}</td><td>${saves}</td><td>${goals}</td><td>${misses}</td><td>${rate}</td>`;tb.appendChild(tr);});}
 function renderPlayers(){
   const home=document.getElementById("homePlayers");
@@ -2339,21 +2369,21 @@ function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 
 function eventRows(){
  return data.events.map(e=>[
-  e.time,teamName(e.side),playerName(e.playerId),eventName(e),
+  e.time,teamName(e.side),playerName(e.playerId),eventName(e),e.detail||"",
   e.x==null?"":`${e.x}%`,e.y==null?"":`${e.y}%`,
   e.goalSide?` ${e.goalSide}`:"",e.gx??"",e.gy??""
  ]);
 }
 function statsRows(){
- return getSortedStatsPlayers().map(p=>{const s=calc(p);return [teamName(p.side),p.no,p.name,p.pos,s.goals,s.shots,s.rate,s.save,s.missshot,s.miss,s.foul,s.turn,s.seven]});
+ return getSortedStatsPlayers().map(p=>{const s=calc(p);return [teamName(p.side),p.no,p.name,p.pos,s.goals,s.shots,s.rate,s.save,s.missshot,s.turn,s.seven]});
 }
 function tsv(rows){return rows.map(r=>r.map(v=>String(v??"").replace(/\t/g," ").replace(/\r?\n/g," ")).join("\t")).join("\r\n")}
 function allTSV(){
  const m=data.match||{};
  return [
   "【試合情報】","自チーム\t"+(m.team||""),"相手チーム\t"+(m.opponent||""),"日付\t"+(m.date||""),"会場\t"+(m.venue||""),
-  "","【イベント一覧】",tsv([["時間","チーム","選手","種別","コートX","コートY","ゴール側","ゴールX","ゴールY"],...eventRows()]),
-  "","【選手別集計】",tsv([["チーム","背番号","氏名","位置","得点","シュート","成功率","GKセーブ","枠外","ミス","ファール","ターンオーバー","7m"],...statsRows()])
+  "","【イベント一覧】",tsv([["時間","チーム","選手","種別","詳細な記録","コートX","コートY","ゴール側","ゴールX","ゴールY"],...eventRows()]),
+  "","【選手別集計】",tsv([["チーム","背番号","氏名","位置","得点","シュート","成功率","GKセーブ","枠外","ターンオーバー","7m"],...statsRows()])
  ].join("\r\n");
 }
 async function copyText(txt){
@@ -2369,8 +2399,8 @@ async function copyText(txt){
  }
 }
 function copyTSV(kind){
- if(kind==="events")copyText(tsv([["時間","チーム","選手","種別","コートX","コートY","ゴール側","ゴールX","ゴールY"],...eventRows()]));
- else if(kind==="stats")copyText(tsv([["チーム","背番号","氏名","位置","得点","シュート","成功率","GKセーブ","枠外","ミス","ファール","ターンオーバー","7m"],...statsRows()]));
+ if(kind==="events")copyText(tsv([["時間","チーム","選手","種別","詳細な記録","コートX","コートY","ゴール側","ゴールX","ゴールY"],...eventRows()]));
+ else if(kind==="stats")copyText(tsv([["チーム","背番号","氏名","位置","得点","シュート","成功率","GKセーブ","枠外","ターンオーバー","7m"],...statsRows()]));
  else copyText(allTSV());
 }
 function downloadTSV(){
