@@ -321,7 +321,7 @@ body{
   <span class="note" style="display:inline-flex;align-items:center;gap:4px;border-left:1px solid #d9dee3;padding-left:10px;margin-left:4px">連続記録 <strong id="elapsedTimerDisplay" style="font-size:16px;font-variant-numeric:tabular-nums;color:#374151">00:00</strong></span>
   <button type="button" id="timerStartBtn" class="good" onclick="startMatchTimer()">スタート</button>
   <button type="button" onclick="resetMatchTimer()">リセット</button>
-  <span class="note">タイマー上限</span>
+  <span class="note">タイマー上限（スタート時に確定・リセットまで保持）</span>
   <label for="timerMinutes">分</label><input id="timerMinutes" type="number" inputmode="numeric" min="0" max="999" value="30" style="width:76px">
   <label for="timerSeconds">秒</label><input id="timerSeconds" type="number" inputmode="numeric" min="0" max="59" value="0" style="width:76px">
   <button type="button" id="timerCorrectionToggle" onclick="toggleTimerCorrection()">分/秒の修正</button>
@@ -335,7 +335,7 @@ body{
 </div>
 <div class="score" id="score">0 - 0</div>
 <div class="event-grid">
-  <div class="shot-result-title">イベント結果</div>
+  <div class="shot-result-title">シュート結果</div>
 
 <div class="shot-results">
   <button class="shot" onclick="addEvent('shot_goal')">得点</button>
@@ -759,7 +759,7 @@ function normalizeImportedMatches(payload){
     return {matches:matches,currentData:isValidMatchData(payload.currentData)?payload.currentData:null};
   }
 
-  // One-match export from v11.
+  // One-match export from v12.
   if(payload.type==="handball-match" && isValidMatchData(payload.matchData)){
     return {matches:[payload.matchData],currentData:payload.matchData};
   }
