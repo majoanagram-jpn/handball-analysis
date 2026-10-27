@@ -325,6 +325,7 @@ body{
   <span id="timerDisplay" class="score" style="font-size:26px;margin:0 8px;font-variant-numeric:tabular-nums">00:00</span>
   <span class="note" style="display:inline-flex;align-items:center;gap:4px;border-left:1px solid #d9dee3;padding-left:10px;margin-left:4px">連続記録 <strong id="elapsedTimerDisplay" style="font-size:16px;font-variant-numeric:tabular-nums;color:#374151">00:00</strong></span>
   <button type="button" id="timerStartBtn" class="good" onclick="startMatchTimer()">スタート</button>
+  <button type="button" id="stopTimer" onclick="stopMatchTimer()">ストップ</button>
   <button type="button" onclick="resetMatchTimer()">リセット</button>
   <span class="note">タイマー上限（スタート時に確定・リセットまで保持）</span>
   <label for="timerMinutes">分</label><input id="timerMinutes" type="number" inputmode="numeric" min="0" max="999" value="30" style="width:76px">
@@ -1294,7 +1295,16 @@ function applyTimerCorrection(){
 function copyTimerToEventTime(){
   document.getElementById("time").value=formatMatchTime(getMatchTimerSeconds());
 }
+function stopMatchTimer() {
+  if (matchTimerInterval) {
+    clearInterval(matchTimerInterval);
+    matchTimerInterval = null;
+  }
 
+  const status = document.getElementById("timerStatus");
+  if (status) status.textContent = "停止中（ストップ）";
+}
+  
 function addEvent(type){
 
   const eventTimeInput=document.getElementById("time");
