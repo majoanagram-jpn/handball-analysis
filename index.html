@@ -242,6 +242,20 @@ body{
   max-width:100%;
   overflow-x:hidden;
 }
+  details > summary {
+  cursor: pointer;
+  font-weight: bold;
+  padding: 10px;
+  list-style-position: inside;
+}
+
+details > summary:hover {
+  background: #f3f4f6;
+}
+
+details > summary::marker {
+  color: #64748b;
+}
 </style>
 </head>
 <body>
@@ -261,11 +275,11 @@ body{
 </button>
 </div>
 <div id="matchStatus" class="note"></div>
-</section>
+</>
 
-<section>
-<h2>2. 選手登録</h2>
-<div class="player-grid">
+<details>
+<summary>2. 選手登録</summary>
+<div class="player-grid"open>
   <div class="team-box">
     <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
       <h3 style="margin:0">自チーム</h3>
@@ -293,7 +307,7 @@ body{
     <div class="scroll"><table><thead><tr><th>番号</th><th>氏名</th><th>位置</th><th></th></tr></thead><tbody id="awayPlayers"></tbody></table></div>
   </div>
 </div>
-</section>
+</details>
 
 <section>
 <h2>3. 試合記録</h2>
@@ -373,8 +387,8 @@ body{
 <div id="eventStatus" class="status" style="margin-top:10px">シュートを記録した後、下のコートをクリックしてシュート位置を登録できます。</div>
 </section>
 
-<section>
-<h2>4. シュート位置</h2>
+<details>
+<summary>4. シュート位置</summary>
 <p class="note">アップロードされたコート画像を使用しています。シュートイベントを登録すると、このコート上をクリックして位置を記録できます。</p>
 <div id="courtWrap">
   <img id="courtImg" alt="ハンドボールコート">
@@ -384,8 +398,8 @@ body{
   <span id="pendingLabel" class="badge">位置登録待ち：なし</span>
   <button class="secondary" onclick="clearPending()">キャンセル</button>
 </div>
-</section>
-<section>
+</details>
+<details>
 <h2>5. ゴールコース</h2>
 <p class="note">シュートイベントを選択した状態でゴール図をクリックすると、ゴール内のコースを記録できます。自チーム選手は左ゴール、相手チーム選手は右ゴールとして自動的に表示されます。</p>
 
@@ -435,10 +449,10 @@ body{
 
 <div id="goalStatus" class="status">
   ゴール位置登録待ち：なし
-</div></section>
+</div></details>
 
-<section>
-<h2>5. シュート分布</h2>
+<details>
+<summary>5. シュート分布</summary>
 
 <p class="note">
   登録されたシュート位置をコート上に一括表示します。
@@ -496,10 +510,10 @@ body{
   <tbody id="shotZoneTable"></tbody>
 </table>
 
-</section>
-<section>
-<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
-  <h2 style="margin:0">6. イベント一覧</h2>
+</details>
+<details>
+<div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px"open>
+  <summary style="margin:0">6. イベント一覧</summary>
   <button type="button" class="small danger" onclick="clearAllEvents()">イベント一覧を一括削除</button>
 </div>
 <div class="row" style="align-items:center;margin-bottom:10px;gap:12px">
@@ -520,7 +534,7 @@ body{
 <th>コート位置</th>
 <th>ゴール位置</th>
 <th>操作</th></tr></thead><tbody id="events"></tbody></table></div>
-</section>
+</details>
 
 <section>
 <h2>7. 選手別集計</h2>
