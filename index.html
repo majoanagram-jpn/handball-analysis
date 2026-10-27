@@ -318,12 +318,19 @@ body{
 <div class="modebar" id="matchTimerPanel" style="padding:10px;border:1px solid #d9dee3;border-radius:8px">
   <strong>試合タイマー</strong>
   <span id="timerDisplay" class="score" style="font-size:26px;margin:0 8px;font-variant-numeric:tabular-nums">00:00</span>
+  <span class="note" style="display:inline-flex;align-items:center;gap:4px;border-left:1px solid #d9dee3;padding-left:10px;margin-left:4px">連続記録 <strong id="elapsedTimerDisplay" style="font-size:16px;font-variant-numeric:tabular-nums;color:#374151">00:00</strong></span>
   <button type="button" id="timerStartBtn" class="good" onclick="startMatchTimer()">スタート</button>
-  <button type="button" id="timerStopBtn" onclick="stopMatchTimer()">ストップ</button>
   <button type="button" onclick="resetMatchTimer()">リセット</button>
-  <label for="timerMinutes">分</label><input id="timerMinutes" type="number" inputmode="numeric" min="0" max="999" value="0" style="width:76px">
+  <span class="note">タイマー上限</span>
+  <label for="timerMinutes">分</label><input id="timerMinutes" type="number" inputmode="numeric" min="0" max="999" value="30" style="width:76px">
   <label for="timerSeconds">秒</label><input id="timerSeconds" type="number" inputmode="numeric" min="0" max="59" value="0" style="width:76px">
-  <button type="button" onclick="applyTimerCorrection()">分/秒を修正</button>
+  <button type="button" onclick="setTimerLimit()">上限を設定</button>
+  <button type="button" id="timerCorrectionToggle" onclick="toggleTimerCorrection()">分/秒の修正</button>
+  <span id="timerCorrectionPanel" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
+    <label for="timerCorrectionMinutes">分</label><input id="timerCorrectionMinutes" type="number" inputmode="numeric" min="0" max="999" value="0" style="width:76px">
+    <label for="timerCorrectionSeconds">秒</label><input id="timerCorrectionSeconds" type="number" inputmode="numeric" min="0" max="59" value="0" style="width:76px">
+    <button type="button" onclick="applyTimerCorrection()">修正</button>
+  </span>
   <button type="button" onclick="copyTimerToEventTime()">現在のタイマーを時間欄へコピー</button>
   <span id="timerStatus" class="note">停止中</span>
 </div>
@@ -1150,16 +1157,27 @@ function refreshGoalkeeperSelect(){
     sel.value="";
   }
 }
-// 試合タイマー（経過時間）。記録時間欄が空なら、種別ボタンを押した時点の値を使用する。
+// 試合タイマー：主タイマーは上限で停止。小型の連続記録タイマーは最初のスタートからリセットまで継続。
 let matchTimerSeconds=0;
 let matchTimerRunning=false;
 let matchTimerStartedAt=0;
 let matchTimerInterval=null;
+let matchTimerLimitSeconds=1800;
+let elapsedTimerSeconds=0;
+let elapsedTimerStartedAt=0;
+let elapsedTimerRunning=false;
 function getMatchTimerSeconds(){
   if(matchTimerRunning){
-    return matchTimerSeconds + Math.max(0, Math.floor((Date.now()-matchTimerStartedAt)/1000));
+    const current=matchTimerSeconds + Math.max(0, Math.floor((Date.now()-matchTimerStartedAt)/1000));
+    return Math.min(current,matchTimerLimitSeconds);
   }
   return matchTimerSeconds;
+}
+function getElapsedTimerSeconds(){
+  if(elapsedTimerRunning){
+    return elapsedTimerSeconds + Math.max(0,Math.floor((Date.now()-elapsedTimerStartedAt)/1000));
+  }
+  return elapsedTimerSeconds;
 }
 function formatMatchTime(total){
   const n=Math.max(0,Math.floor(Number(total)||0));
@@ -1169,46 +1187,97 @@ function renderMatchTimer(){
   const seconds=getMatchTimerSeconds();
   const display=document.getElementById("timerDisplay");
   if(display)display.textContent=formatMatchTime(seconds);
+  const elapsedDisplay=document.getElementById("elapsedTimerDisplay");
+  if(elapsedDisplay)elapsedDisplay.textContent=formatMatchTime(getElapsedTimerSeconds());
   const mins=document.getElementById("timerMinutes");
   const secs=document.getElementById("timerSeconds");
-  if(mins && document.activeElement!==mins)mins.value=String(Math.floor(seconds/60));
-  if(secs && document.activeElement!==secs)secs.value=String(seconds%60).padStart(2,"0");
+  if(mins && document.activeElement!==mins)mins.value=String(Math.floor(matchTimerLimitSeconds/60));
+  if(secs && document.activeElement!==secs)secs.value=String(matchTimerLimitSeconds%60).padStart(2,"0");
   const status=document.getElementById("timerStatus");
-  if(status)status.textContent=matchTimerRunning?"計測中":"停止中";
+  if(status)status.textContent=matchTimerRunning?"計測中":(seconds>=matchTimerLimitSeconds?"上限到達":"停止中");
   const start=document.getElementById("timerStartBtn");
-  if(start)start.disabled=matchTimerRunning;
+  if(start)start.disabled=matchTimerRunning || seconds>=matchTimerLimitSeconds;
+  if(matchTimerRunning && seconds>=matchTimerLimitSeconds){
+    matchTimerSeconds=matchTimerLimitSeconds;
+    matchTimerRunning=false;
+    matchTimerStartedAt=0;
+    if(status)status.textContent="上限到達";
+    if(start)start.disabled=true;
+  }
+  // 主タイマーが上限に達しても、連続記録タイマーが動いている間は描画更新を続ける。
+  if(!matchTimerRunning && !elapsedTimerRunning && matchTimerInterval){
+    clearInterval(matchTimerInterval);matchTimerInterval=null;
+  }
 }
 function startMatchTimer(){
-  if(matchTimerRunning)return;
-  matchTimerRunning=true;
-  matchTimerStartedAt=Date.now();
-  if(matchTimerInterval)clearInterval(matchTimerInterval);
-  matchTimerInterval=setInterval(renderMatchTimer,200);
-  renderMatchTimer();
-}
-function stopMatchTimer(){
-  if(!matchTimerRunning)return;
-  matchTimerSeconds=getMatchTimerSeconds();
-  matchTimerRunning=false;
-  matchTimerStartedAt=0;
-  if(matchTimerInterval){clearInterval(matchTimerInterval);matchTimerInterval=null;}
+  // 連続記録タイマーは最初のスタート時にだけ開始し、主タイマー上限後もリセットまで継続する。
+  if(!elapsedTimerRunning){
+    elapsedTimerRunning=true;
+    elapsedTimerStartedAt=Date.now();
+  }
+  if(!matchTimerRunning && matchTimerSeconds<matchTimerLimitSeconds){
+    matchTimerRunning=true;
+    matchTimerStartedAt=Date.now();
+  }
+  if(!matchTimerInterval)matchTimerInterval=setInterval(renderMatchTimer,200);
   renderMatchTimer();
 }
 function resetMatchTimer(){
-  stopMatchTimer();
+  matchTimerRunning=false;
   matchTimerSeconds=0;
+  matchTimerStartedAt=0;
+  elapsedTimerRunning=false;
+  elapsedTimerSeconds=0;
+  elapsedTimerStartedAt=0;
+  if(matchTimerInterval){clearInterval(matchTimerInterval);matchTimerInterval=null;}
   renderMatchTimer();
 }
-function applyTimerCorrection(){
+function setTimerLimit(){
   const mins=document.getElementById("timerMinutes");
   const secs=document.getElementById("timerSeconds");
-  let m=Number(mins.value), sec=Number(secs.value);
-  if(mins.value.trim()===""||secs.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(sec)||m<0||sec<0||sec>59){
-    alert("分は0以上、秒は0～59の整数で入力してください。");return;
+  const m=Number(mins.value), sec=Number(secs.value);
+  if(mins.value.trim()===""||secs.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(sec)||m<0||m>999||sec<0||sec>59){
+    alert("タイマー上限は、分0～999、秒0～59の整数で入力してください。");return;
   }
-  matchTimerSeconds=m*60+sec;
-  if(matchTimerRunning)matchTimerStartedAt=Date.now();
+  const limit=m*60+sec;
+  if(limit<=0){alert("タイマー上限は1秒以上にしてください。");return;}
+  matchTimerLimitSeconds=limit;
+  if(matchTimerRunning && getMatchTimerSeconds()>=matchTimerLimitSeconds){
+    matchTimerSeconds=matchTimerLimitSeconds;
+    matchTimerRunning=false;matchTimerStartedAt=0;
+  }else if(!matchTimerRunning && matchTimerSeconds>=matchTimerLimitSeconds){
+    matchTimerSeconds=matchTimerLimitSeconds;
+  }
+  if((matchTimerRunning||elapsedTimerRunning)&&!matchTimerInterval)matchTimerInterval=setInterval(renderMatchTimer,200);
   renderMatchTimer();
+}
+function toggleTimerCorrection(){
+  const panel=document.getElementById("timerCorrectionPanel");
+  if(!panel)return;
+  const opening=panel.style.display==="none";
+  panel.style.display=opening?"inline-flex":"none";
+  if(opening){
+    const now=getMatchTimerSeconds();
+    document.getElementById("timerCorrectionMinutes").value=String(Math.floor(now/60));
+    document.getElementById("timerCorrectionSeconds").value=String(now%60);
+  }
+}
+function applyTimerCorrection(){
+  const mins=document.getElementById("timerCorrectionMinutes");
+  const secs=document.getElementById("timerCorrectionSeconds");
+  const m=Number(mins.value), sec=Number(secs.value);
+  if(mins.value.trim()===""||secs.value.trim()===""||!Number.isInteger(m)||!Number.isInteger(sec)||m<0||m>999||sec<0||sec>59){
+    alert("修正時間は、分0～999、秒0～59の整数で入力してください。");return;
+  }
+  const corrected=m*60+sec;
+  if(corrected>matchTimerLimitSeconds){alert("修正時間はタイマー上限以下にしてください。");return;}
+  matchTimerSeconds=corrected;
+  if(matchTimerRunning)matchTimerStartedAt=Date.now();
+  else if(corrected<matchTimerLimitSeconds)matchTimerRunning=false;
+  if((matchTimerRunning||elapsedTimerRunning)&&!matchTimerInterval)matchTimerInterval=setInterval(renderMatchTimer,200);
+  renderMatchTimer();
+  const panel=document.getElementById("timerCorrectionPanel");
+  if(panel)panel.style.display="none";
 }
 function copyTimerToEventTime(){
   document.getElementById("time").value=formatMatchTime(getMatchTimerSeconds());
