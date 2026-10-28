@@ -2361,10 +2361,7 @@ function renderTeamKPI(){
     const toPer50=possessionCount?(turnoverTotal/possessionCount*50).toFixed(1):"-";
     const teamGks=data.players.filter(p=>p.side===side.key&&String(p.pos||"").trim().toUpperCase()==="GK");
     const teamGkIds=new Set(teamGks.map(p=>p.id));
-    const faced=shotEvents.filter(e=>
-  teamGkIds.has(e.goalkeeperId)&&
-  (selectedPosition==="all"||positionOf(e)===selectedPosition)
-);
+    const faced=shotEvents.filter(e=>teamGkIds.has(e.goalkeeperId));
     const teamSaves=faced.filter(e=>e.type==="shot_save").length;
     const responsibilityRateDisplay=selectedPosition==="all"?"-":responsibilityTurnoverPct;
     const responsibilityToDisplay=selectedPosition==="all"?"-":responsibilityToPer50;
