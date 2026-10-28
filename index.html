@@ -2368,7 +2368,7 @@ function renderTeamKPI(){
     const teamSaves=faced.filter(e=>e.type==="shot_save").length;
     const responsibilityRateDisplay=selectedPosition==="all"?"-":responsibilityTurnoverPct;
     const responsibilityToDisplay=selectedPosition==="all"?"-":responsibilityToPer50;
-    tbody.innerHTML=`<tr><th>シュート総数</th><th>チームシュート成功率</th><th>ポゼッション数</th><th>${turnoverLabel}</th></tr><tr><td>${selectedPosition==="all"?shotTotal:successShots}</td><td>${pct(successGoals,successShots)}</td><td>${possessionCount}</td><td>${turnoverTotal}</td></tr><tr><th>ターンオーバー率</th><th>TO%</th><th>責任ターンオーバー率</th><th>責任TO%</th></tr><tr><td>${turnoverRate}</td><td>${toPer50}</td><td>${responsibilityRateDisplay}</td><td>${responsibilityToDisplay}</td></tr><tr><th>GK被シュート総数</th><th>GKセーブ総数</th><th>GKセーブ率</th></tr><tr><td>${teamSaves}</td><td>${faced.length}</td><td>${pct(teamSaves,faced.length)}</td></tr>`;
+    tbody.innerHTML=`<tr><th>シュート総数</th><th>チームシュート成功率</th><th>ポゼッション数</th><th>${turnoverLabel}</th></tr><tr><td>${selectedPosition==="all"?shotTotal:successShots}</td><td>${pct(successGoals,successShots)}</td><td>${possessionCount}</td><td>${turnoverTotal}</td></tr><tr><th>ターンオーバー率</th><th>TO%</th><th>責任ターンオーバー率</th><th>責任TO%</th></tr><tr><td>${turnoverRate}</td><td>${toPer50}</td><td>${responsibilityRateDisplay}</td><td>${responsibilityToDisplay}</td></tr><tr><th>GK被シュート総数</th><th>GKセーブ総数</th><th>GKセーブ率</th></tr><tr><td>${faced.length}</td><td>${teamSaves}</td><td>${pct(teamSaves,faced.length)}</td></tr>`;
   });
 }
 
