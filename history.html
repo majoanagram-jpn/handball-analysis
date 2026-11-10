@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>更新履歴・機能追加一覧｜ハンドボール試合分析ツール</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f7;color:#1d2935;font-family:system-ui,-apple-system,"Yu Gothic",Meiryo,sans-serif;line-height:1.7}header{background:#17202a;color:#fff;padding:22px max(18px,calc((100% - 980px)/2))}header h1{font-size:22px;margin:0}header p{margin:4px 0 0;color:#d5dce3;font-size:13px}main{max-width:980px;margin:20px auto;padding:0 14px}.nav,.card{background:#fff;border:1px solid #dce2e8;border-radius:10px;padding:16px;margin-bottom:14px}.nav a{display:inline-block;margin:3px 8px 3px 0;color:#075985}.version{border-left:4px solid #52758e;padding:3px 0 3px 14px;margin:22px 0 12px}.version h2{font-size:19px;margin:0}.meta{font-size:12px;color:#65717d}.tag{display:inline-block;font-size:11px;padding:2px 7px;border-radius:99px;background:#e9eff4;color:#34495a;margin-right:5px}h3{font-size:15px;margin:12px 0 4px}ul{margin:5px 0 10px;padding-left:1.4em}li{margin:3px 0}.caution{background:#fff8e7;border:1px solid #f0dfb2;padding:12px;border-radius:8px;font-size:13px}.back{display:inline-block;margin:0 0 14px;padding:7px 11px;background:#17202a;color:#fff;text-decoration:none;border-radius:6px;font-size:13px}.small{font-size:12px;color:#637080}@media(max-width:600px){header{padding:18px 14px}main{margin:12px auto;padding:0 9px}.nav,.card{padding:13px}}
+</style></head><body>
+<header><h1>更新履歴・機能追加一覧</h1><p>ハンドボール試合分析ツール｜v10以降の主な変更内容</p></header>
+<main><a class="back" href="index.html">← 試合分析ツールへ戻る</a>
+<section class="nav"><strong>バージョン一覧</strong><div><a href="#v16">v16</a><a href="#v153">v15.3</a><a href="#v152">v15.2</a><a href="#v151">v15.1</a><a href="#v15">v15</a><a href="#v146">v14.6</a><a href="#v143">v14.3</a><a href="#v142">v14.2</a><a href="#v11">v11</a><a href="#v104">vS10.4</a><a href="#v102">v10.2</a><a href="#v101">v10.1</a><a href="#v10">v10</a></div><p class="small">※各バージョンの保存ファイル・過去の会話で確認できた範囲を整理しています。差分を確定できない版は、その旨を明記しています。</p></section>
+
+<section class="card" id="v16"><div class="version"><h2>v16</h2><div class="meta">今回の更新｜更新履歴ページへの導線追加</div></div><ul><li>ツール本体のヘッダーに「更新履歴・機能追加一覧」へのリンクを追加。</li><li>従来の「使い方ガイド」へのリンクは維持。</li><li>イベント登録後も「前半／後半／一本」の選択を保持するv15.3の挙動を継承。</li></ul></section>
+
+<section class="card" id="v153"><div class="version"><h2>v15.3</h2><div class="meta">イベント入力の状態保持</div></div><ul><li>イベント登録後の入力リセット対象から「前半／後半／一本」を除外。</li><li>前回選択した試合区分を次のイベント入力にも引き継ぐ。</li><li>チーム、選手、GK、時間、詳細、相手選手などは従来どおり入力後に初期化。</li></ul></section>
+
+<section class="card" id="v152"><div class="version"><h2>v15.2</h2><div class="meta">チームKPIの表示整理</div></div><ul><li>チームKPIを3段構成に整理。1段目にシュート総数・チームシュート成功率・ポゼッション数・ターンオーバー＋被パスカット数、2段目にターンオーバー率・TO%・責任ターンオーバー率・責任TO%、3段目にGK指標を配置。</li><li>集計対象ポジションが「全体」の場合、責任ターンオーバー率・責任TO%は「-」表示。</li></ul></section>
+
+<section class="card" id="v151"><div class="version"><h2>v15.1</h2><div class="meta">ブロック記録とターンオーバー指標の拡張</div></div><ul><li>ブロック登録時、オフェンス継続／オフェンス終了を未選択でも記録可能に変更。</li><li>ブロック後の扱いが未選択の場合、ポゼッション数には加算しない。</li><li>ターンオーバー率・TO%と、ポジション別の責任ターンオーバー率・責任TO%を分離。</li><li>KPIの2段目にターンオーバー関連指標、3段目にGK指標を配置する構成へ変更。</li></ul></section>
+
+<section class="card" id="v15"><div class="version"><h2>v15</h2><div class="meta">ブロックイベントとポゼッション数の導入</div></div><ul><li>シュート結果に「ブロック」を追加し、シュート数に含める。</li><li>ブロック時に「オフェンス継続／オフェンス終了」を記録可能にした。</li><li>ブロックした相手選手を任意で指定可能にした（GKおよび背番号0を除外）。</li><li>イベント一覧に相手選手・ブロック数・ブロック後の扱いを表示。</li><li>チームKPIにポゼッション数を追加。ターンオーバー、得点、被パスカット、シュートミス、GKセーブ、オフェンス終了扱いのブロック等を計上対象とする。</li><li>TSV出力にもGK・相手選手・ブロック関連情報を反映。</li></ul></section>
+
+<section class="card" id="v146"><div class="version"><h2>v14.6</h2><div class="meta">イベント入力時の試合区分選択</div></div><ul><li>イベント登録時の「前後半」選択を必須化し、初期状態を「未選択」に変更。</li><li>「前半」「後半」「一本」を選択肢として用意。</li><li>「一本」のイベントではイベント一覧の前後半セルを非表示にする仕様。</li><li>試合区分が未選択の場合はイベント登録を拒否。</li></ul></section>
+
+<section class="card" id="v143"><div class="version"><h2>v14.3</h2><div class="meta">期間・ポジション別分析と表示改善</div></div><ul><li>チームKPIに期間別（全体／前半／後半）の表示切替を追加。</li><li>チームKPIにポジション別の集計対象フィルタを追加。</li><li>シュート位置の表示について、自チーム・相手チームの攻撃方向に応じた左右反転・回転処理を導入。</li><li>選手一覧の各種項目による並べ替えに対応している版を確認。</li></ul><p class="small">※並べ替え機能の初回導入バージョンは、現存資料だけでは特定できません。</p></section>
+
+<section class="card" id="v142"><div class="version"><h2>v14.2</h2><div class="meta">チームKPIの導入・拡張</div></div><ul><li>自チーム・相手チームのチームKPI表示を追加。</li><li>シュート総数、チームシュート成功率、ターンオーバー＋被パスカット、ターンオーバー率、TO%などを表示。</li><li>GKのセーブ数、被シュート数、セーブ率をチーム単位で確認可能にした。</li></ul></section>
+
+<section class="card" id="v11"><div class="version"><h2>v11／v11修正版</h2><div class="meta">画面レイアウト・操作性の修正</div></div><ul><li>PC表示で相手チームの選手登録欄が横方向にはみ出す問題を修正。</li><li>選手登録領域の幅を調整し、必要な場合は領域内で横スクロールできるよう改善。</li></ul><p class="small">※タイマー上限、タイマー処理、セクション表示、前後半集計・時間切替などの個別修正ファイルも残っていますが、すべてがv11本体へ統合された時点は確定できません。</p></section>
+
+<section class="card" id="v104"><div class="version"><h2>vS10.4</h2><div class="meta">スマートフォンでのデータ運用・表示改善</div></div><ul><li>スマートフォンでのJSONバックアップ／復元を扱う構成へ調整。</li><li>スマートフォン版のExcel出力を削除。</li><li>選手登録入力欄のスマートフォン表示で発生する横はみ出しを修正。</li></ul></section>
+
+<section class="card" id="v102"><div class="version"><h2>v10.2</h2><div class="meta">共有・データ連携の改善</div></div><ul><li>v10系列の共有・データ復元機能を引き継ぎ、保存ファイルが確認できる。</li></ul><p class="small">※v10.2固有の変更点を示す確実な差分記録は確認できていません。</p></section>
+
+<section class="card" id="v101"><div class="version"><h2>v10.1</h2><div class="meta">QRコードによるデータ共有</div></div><ul><li>共有方式をQRコード共有へ変更。</li><li>大容量データを複数のQRコードに分割し、読み取り後に結合・復元する方式に対応。</li><li>利用可能な環境ではgzip圧縮を使用。</li><li>PC向けJSONバックアップ／復元を維持。</li><li>この段階ではモバイル側のJSONバックアップを一度外し、復元機能は残した構成を確認。</li></ul></section>
+
+<section class="card" id="v10"><div class="version"><h2>v10</h2><div class="meta">保存されている基準版</div></div><ul><li>v10のHTMLファイルを確認。</li><li>ただし、v10で初めて導入された機能をすべて特定できる変更記録は残っていないため、ここでは個別機能の初出を断定しない。</li></ul></section>
+
+<section class="caution"><strong>履歴の読み方・データに関する注意</strong><br>この一覧は、保存されているHTMLファイルと過去の変更依頼から確認できた内容を整理したものです。すべての細かな修正が網羅されているとは限らず、初出バージョンを確定できない機能もあります。記載のない機能がその版に存在しなかったことを意味するものではありません。<br>アプリ本体を更新する前には、必ず試合データをJSON形式でバックアップしてください。</section>
+<footer class="small" style="text-align:center;padding:14px">ハンドボール試合分析ツール｜更新履歴</footer>
+</main></body></html>
