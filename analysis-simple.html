@@ -247,6 +247,80 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
   background: #b42318;
   color: #fff;
 }  
+  .scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 150px;
+  text-align: center;
+}
+
+.score-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.score-team-name {
+  font-size: 10px;
+  color: #cbd5e1;
+  font-weight: 700;
+  max-width: 90px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.score-number {
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-separator {
+  font-size: 23px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.score-change {
+  min-height: 13px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: #fbbf24;
+  font-weight: 700;
+}
+
+@media(max-width:600px) {
+  .scoreboard {
+    gap: 5px;
+    min-width: 100px;
+  }
+
+  .score-team {
+    min-width: 35px;
+  }
+
+  .score-team-name {
+    font-size: 8px;
+    max-width: 55px;
+  }
+
+  .score-number {
+    font-size: 23px;
+  }
+
+  .score-separator {
+    font-size: 18px;
+  }
+
+  .score-change {
+    font-size: 9px;
+  }
+}
 </style>
 </head>
 <body>
@@ -263,6 +337,21 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
         <button id="resetBtn" type="button">リセット</button>
         <button id="correctionToggleBtn" type="button">時間修正</button>
       </div>
+      <div class="scoreboard">
+  <div class="score-team">
+    <span class="score-team-name" id="homeScoreName">自チーム</span>
+    <span class="score-number" id="homeScore">0</span>
+    <span class="score-change" id="homeScoreChange"></span>
+  </div>
+
+  <span class="score-separator">-</span>
+
+  <div class="score-team">
+    <span class="score-team-name" id="awayScoreName">相手チーム</span>
+    <span class="score-number" id="awayScore">0</span>
+    <span class="score-change" id="awayScoreChange"></span>
+  </div>
+</div>
     </div>
     <div class="timer-bottom">
       <div class="period-switch" aria-label="試合区分">
@@ -552,6 +641,7 @@ function loadData() {
     renderPossession();
     renderGoalkeepers();
     renderEvents();
+    renderScore();
 
     $("saveStatus").textContent =
       "既存データを読み込みました。";
@@ -692,7 +782,77 @@ function togglePossessionLock() {
   possessionLocked = !possessionLocked;
   renderPossession();
 }
+// ------------------------------
+// 得点表示
+// ------------------------------
 
+let scoreChangeTimeout = null;
+
+
+// イベントから得点を集計
+function getScore() {
+  const score = {
+    home: 0,
+    away: 0
+  };
+
+  data.events.forEach(event => {
+    if (event.type === "shot_goal") {
+      if (event.side === "home") {
+        score.home++;
+      } else if (event.side === "away") {
+        score.away++;
+      }
+    }
+  });
+
+  return score;
+}
+
+
+// 得点表示を更新
+function renderScore(previousScore = null) {
+  const score = getScore();
+
+  $("homeScoreName").textContent = getTeamName("home");
+  $("awayScoreName").textContent = getTeamName("away");
+
+  $("homeScore").textContent = score.home;
+  $("awayScore").textContent = score.away;
+
+  if (scoreChangeTimeout) {
+    clearTimeout(scoreChangeTimeout);
+    scoreChangeTimeout = null;
+  }
+
+  $("homeScoreChange").textContent = "";
+  $("awayScoreChange").textContent = "";
+
+  if (!previousScore) {
+    return;
+  }
+
+  const homeDiff = score.home - previousScore.home;
+  const awayDiff = score.away - previousScore.away;
+
+  if (homeDiff !== 0) {
+    $("homeScoreChange").textContent =
+      homeDiff > 0 ? `+${homeDiff}` : String(homeDiff);
+  }
+
+  if (awayDiff !== 0) {
+    $("awayScoreChange").textContent =
+      awayDiff > 0 ? `+${awayDiff}` : String(awayDiff);
+  }
+
+  if (homeDiff !== 0 || awayDiff !== 0) {
+    scoreChangeTimeout = setTimeout(() => {
+      $("homeScoreChange").textContent = "";
+      $("awayScoreChange").textContent = "";
+      scoreChangeTimeout = null;
+    }, 2500);
+  }
+}
 // ------------------------------
 // 対戦GK選択（v16のGK別集計に対応・番号選択を攻撃権切替後も保持）
 // ------------------------------
@@ -1269,15 +1429,19 @@ function recordEvent(type) {
     return;
   }
 
-  const event = createEvent(type, player);
+  const previousScore = getScore();
 
-  data.events.push(event);
+const event = createEvent(type, player);
+
+data.events.push(event);
 
   if (!saveData()) {
     data.events.pop();
     return;
   }
-
+if (type === "shot_goal") {
+  renderScore(previousScore);
+}
   if (type === "shot_goal" && !possessionLocked) {
   switchPossession();
 }
@@ -1436,14 +1600,17 @@ function undoLastEvent() {
   ) {
     return;
   }
-
+const previousScore = getScore();
   data.events.pop();
 
   if (!saveData()) {
     data.events.push(last);
     return;
   }
-
+if (!saveData()) {
+  data.events.push(last);
+  return;
+}
   if (
     last.type === "shot_goal" ||
     last.type === "turnover"
