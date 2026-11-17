@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<title>ハンドボール試合分析ツール v16</title>
+<title>ハンドボール試合分析ツール v17</title>
 <meta property="og:site_name" content="試合分析ツールforハンドボール">
 <meta property="og:title" content="試合分析ツールforハンドボール">
 <meta property="og:description" content="ハンドボールの記録・分析ツール">
@@ -280,7 +280,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v16｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="guide.html" style="display:inline-block;margin-top:9px;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;margin-top:9px;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v17｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple_v3.3.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -826,6 +826,47 @@ document.getElementById("courtImg").src=COURT_IMAGE;
 document.getElementById("shotAnalysisCourt").src=COURT_IMAGE;
 function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll();
 }
+
+// 簡易記録版との共有：別タブ側で同じ保存キーが更新されたら、v17側も再読込する。
+// localStorage の storage イベントは、書き込みを行ったタブ自身には発火しない。
+function syncSharedDataFromStorage(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    const current=JSON.stringify(data);
+    if(raw===null){
+      if(current==='{"players":[],"match":null,"events":[]}')return;
+      data={players:[],match:null,events:[]};
+    }else{
+      if(raw===current)return;
+      const parsed=JSON.parse(raw);
+      if(!parsed || typeof parsed!=="object" ||
+         !Array.isArray(parsed.players) || !Array.isArray(parsed.events)){
+        console.warn("共有データの形式が不正なため、再読込を中止しました。");
+        return;
+      }
+      data=parsed;
+    }
+    if(!Array.isArray(data.players))data.players=[];
+    if(!Array.isArray(data.events))data.events=[];
+    if(!data.match || typeof data.match!=="object")data.match=null;
+    data.events.forEach(e=>{
+      if(e.type==="miss"||e.type==="foul")e.type="turnover";
+      if(e.type==="turnover"&&!e.detail)e.detail="";
+    });
+    if(pendingEventId && !data.events.some(e=>e.id===pendingEventId))pendingEventId=null;
+    renderAll();
+    const status=document.getElementById("matchStatus");
+    if(status)status.textContent="簡易記録版との共有データを再読み込みしました。";
+  }catch(error){
+    console.error("共有データの再読込に失敗しました。",error);
+  }
+}
+window.addEventListener("storage",event=>{
+  if(event.key===KEY || event.key===null)syncSharedDataFromStorage();
+});
+window.addEventListener("focus",syncSharedDataFromStorage);
+window.addEventListener("pageshow",syncSharedDataFromStorage);
+
 function saveHistory(){
   localStorage.setItem(
     HISTORY_KEY,
