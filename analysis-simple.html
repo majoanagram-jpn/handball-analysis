@@ -1583,6 +1583,7 @@ function renderEvents() {
 // 直近イベント削除
 // ------------------------------
 
+
 function undoLastEvent() {
   if (!data.events.length) {
     alert("削除できる記録がありません。");
@@ -1600,17 +1601,26 @@ function undoLastEvent() {
   ) {
     return;
   }
-const previousScore = getScore();
+
+  // 削除前の得点を保存
+  const previousScore = getScore();
+
+  // 最後のイベントを削除
   data.events.pop();
 
+  // 保存に失敗した場合は削除を取り消す
   if (!saveData()) {
     data.events.push(last);
+    renderEvents();
     return;
   }
-if (!saveData()) {
-  data.events.push(last);
-  return;
-}
+
+  // 得点イベントを削除した場合、得点表示を更新
+  if (last.type === "shot_goal") {
+    renderScore(previousScore);
+  }
+
+  // 攻撃権を伴うイベントなら、攻撃権も復元
   if (
     last.type === "shot_goal" ||
     last.type === "turnover"
@@ -1622,6 +1632,7 @@ if (!saveData()) {
   renderPlayers();
   renderGoalkeepers();
 }
+
 
 
 // ------------------------------
