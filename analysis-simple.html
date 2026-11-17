@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17202a">
+<title>試合記録モード v3.3（分析ツール v16対応）</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Yu Gothic",Meiryo,sans-serif;color:#17202a;background:#f2f5f8}
+*{box-sizing:border-box}
+body{margin:0;padding:0 0 28px}
+button,select{font:inherit}
+button{border:0;border-radius:10px;padding:12px 14px;background:#1769aa;color:#fff;font-weight:700;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+header{position:sticky;top:0;z-index:20;background:#17202a;color:#fff;box-shadow:0 3px 12px #0002}
+.timer-wrap{max-width:900px;margin:auto;padding:10px 14px 12px}
+.timer-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.timer-title{font-size:12px;color:#cbd5e1;font-weight:700;letter-spacing:.04em}
+#timerDisplay{font-size:clamp(32px,8vw,48px);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15;letter-spacing:.02em}
+.timer-controls{display:flex;gap:6px;flex-wrap:wrap}
+.timer-controls button{padding:9px 12px;font-size:13px}
+#startBtn{background:#15803d}#stopBtn{background:#64748b}#resetBtn{background:#475569}
+.timer-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+.period-switch{display:flex;gap:5px}
+.period-switch button{background:#334155;padding:7px 12px;font-size:13px}
+.period-switch button.active{background:#0d75bd;box-shadow:inset 0 0 0 2px #bfdbfe}
+#timerStatus{font-size:11px;color:#cbd5e1}
+main{max-width:900px;margin:14px auto;padding:0 12px}
+.panel{background:#fff;border:1px solid #dce2e8;border-radius:14px;padding:15px;margin-bottom:12px;box-shadow:0 2px 8px #17202a08}
+.panel h2{font-size:16px;margin:0 0 12px}
+.subnote{font-size:12px;color:#64748b;margin:-5px 0 12px}
+.possession-display{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.possession-team{border-radius:10px;padding:10px 8px;text-align:center;background:#e5e7eb;color:#64748b;font-weight:800;border:2px solid transparent}
+.possession-team .team-label{display:block;font-size:13px}
+.possession-team .team-state{display:block;font-size:11px;margin-top:3px}
+.possession-team.active-home{background:#dbeafe;border-color:#1769aa;color:#0b4774}
+.possession-team.active-away{background:#fee2e2;border-color:#b42318;color:#991b1b}
+.goalkeeper-groups{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.goalkeeper-group{min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:8px}
+.goalkeeper-group-title{font-size:12px;font-weight:800;margin-bottom:6px}
+.goalkeeper-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0}
+.goalkeeper-btn{min-height:54px;background:#e8edf2;color:#17202a;border:2px solid transparent;font-size:20px;font-weight:800}
+.goalkeeper-btn.active{background:#dbeafe;border-color:#1769aa;color:#0b4774}
+.player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(62px,1fr));gap:7px}
+.player-btn{min-height:56px;background:#e8edf2;color:#17202a;border:2px solid transparent;padding:7px 4px}
+.player-btn .number{font-size:20px;font-weight:800;display:block;line-height:1.1}
+.player-btn .name{font-size:10px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+.player-btn.active{background:#dbeafe;border-color:#1769aa;color:#0b4774}
+.action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.action-btn{min-height:58px;background:#e8edf2;color:#17202a;border:2px solid transparent}
+.action-btn.active{background:#ede9fe;border-color:#7c3aed;color:#5b21b6}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.result-btn{min-height:56px;font-size:17px}
+#successBtn{background:#15803d}#failureBtn{background:#b42318}
+#recordBtn{width:100%;margin-top:10px;min-height:54px;font-size:17px}
+.turnover-btn{width:100%;min-height:66px;background:#b42318;font-size:20px;display:flex;justify-content:center;align-items:center;gap:10px}
+.turnover-note{font-size:11px;color:#fee2e2;font-weight:500}
+.event-list{display:flex;flex-direction:column;gap:7px}
+.event-item{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+.event-time{font-variant-numeric:tabular-nums;font-weight:800;color:#475569;min-width:55px;font-size:13px}
+.event-main{min-width:0;flex:1}
+.event-desc{font-weight:700;font-size:14px;overflow-wrap:anywhere}
+.event-meta{font-size:11px;color:#64748b;margin-top:2px}
+.undo-btn{background:#f1f5f9;color:#334155;padding:8px 10px;font-size:12px}
+.empty{font-size:13px;color:#64748b;text-align:center;padding:18px 8px}
+.status{font-size:12px;color:#475569;margin-top:9px;min-height:1.3em}
+.footer-actions{display:flex;gap:8px;flex-wrap:wrap}
+.footer-actions button{flex:1}
+.secondary{background:#64748b}
+.warning{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:10px;border-radius:9px;font-size:12px;line-height:1.5}
+@media(max-width:600px){
+ body{padding-bottom:8px}
+ .timer-wrap{padding:6px 8px 7px}
+ #timerDisplay{font-size:32px}
+ .timer-controls{gap:4px}
+ .timer-controls button{padding:6px 8px;font-size:11px}
+ .timer-bottom{margin-top:4px;gap:6px}
+ .period-switch button{padding:5px 8px;font-size:11px}
+ #timerStatus,#elapsedTimerDisplay{font-size:10px}
+ main{padding:0 6px;margin-top:6px}
+ .panel{padding:8px;border-radius:9px;margin-bottom:6px}
+ .panel h2{font-size:14px;margin-bottom:7px}
+ .subnote{font-size:10px;margin:-3px 0 7px}
+ .action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .player-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+ .player-btn{min-height:40px;padding:4px 2px}
+ .player-btn .number{font-size:16px}
+ .player-btn .name{font-size:9px}
+ .goalkeeper-groups{gap:6px;margin-top:6px}
+ .goalkeeper-group{padding:5px}
+ .goalkeeper-btn{min-height:38px;font-size:16px;padding:4px 2px}
+ .possession-team{padding:6px 4px}
+ .possession-team .team-label{font-size:11px}
+ .possession-team .team-state{font-size:9px}
+ .result-btn{min-height:43px;font-size:14px}
+ .turnover-btn{min-height:48px;font-size:16px}
+ .event-item{padding:6px;gap:6px}
+ .event-desc{font-size:12px}
+ .event-meta{font-size:10px}
+ .mode-controls{gap:5px;margin-bottom:7px}
+ .mode-controls button{min-width:0;padding:7px 5px;font-size:11px}
+ #undoBtn{margin-top:7px;padding:8px}
+ .status{font-size:10px;margin-top:5px}
+}
+@media(min-width:601px) and (max-width:900px){
+ main{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+ .panel{margin-bottom:0}
+ .panel:nth-of-type(1),.panel:nth-of-type(2),.panel:nth-of-type(5),main>.warning{grid-column:1 / -1}
+}
+.mode-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.mode-controls button {
+  flex: 1;
+  min-width: 130px;
+}
+
+#undoBtn {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.result-btn {
+  min-height: 58px;
+  font-size: 16px;
+}
+
+#successBtn {
+  background: #15803d;
+}
+
+#failureBtn {
+  background: #b42318;
+}
+
+#warningBtn {
+  background: #d97706;
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="timer-wrap">
+    <div class="timer-top">
+      <div>
+        <div class="timer-title">MATCH TIMER</div>
+        <div id="timerDisplay">00:00</div>
+      </div>
+      <div class="timer-controls">
+        <button id="startBtn" type="button">開始</button>
+        <button id="stopBtn" type="button">停止</button>
+        <button id="resetBtn" type="button">リセット</button>
+        <button id="correctionToggleBtn" type="button">時間修正</button>
+      </div>
+    </div>
+    <div class="timer-bottom">
+      <div class="period-switch" aria-label="前後半">
+        <button type="button" class="active" data-period="前半">前半</button>
+        <button type="button" data-period="後半">後半</button>
+      </div>
+      <span id="elapsedTimerDisplay">連続記録 00:00</span><span id="timerStatus">停止中</span>
+    </div>
+  </div>
+<div id="timerCorrectionPanel"
+     style="display:none;padding:8px 14px 12px;max-width:900px;margin:auto;">
+
+  <label for="correctionMinutes">分</label>
+  <input id="correctionMinutes"
+         type="number"
+         min="0"
+         value="0"
+         style="width:65px;">
+
+  <label for="correctionSeconds">秒</label>
+  <input id="correctionSeconds"
+         type="number"
+         min="0"
+         max="59"
+         value="0"
+         style="width:65px;">
+
+  <button id="applyCorrectionBtn" type="button">
+    修正を適用
+  </button>
+</div>
+</header>
+
+<main>
+
+  <section class="panel">
+    <h2>攻撃権</h2>
+    <div id="possessionDisplay" class="possession-display" aria-live="polite"></div>
+    <button type="button" id="switchPossessionBtn" class="secondary">攻撃権を手動で切り替え</button>
+    <div class="goalkeeper-groups">
+      <div class="goalkeeper-group">
+        <div class="goalkeeper-group-title">自チームGK</div>
+        <div class="goalkeeper-grid" id="homeGoalkeeperGrid" role="group" aria-label="自チームGKの背番号">
+          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="home" data-goalkeeper-no="1" aria-pressed="false">1</button>
+          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="home" data-goalkeeper-no="12" aria-pressed="false">12</button>
+          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="home" data-goalkeeper-no="16" aria-pressed="false">16</button>
+        </div>
+        <div class="status" id="homeGoalkeeperStatus">未選択</div>
+      </div>
+      <div class="goalkeeper-group">
+        <div class="goalkeeper-group-title">相手チームGK</div>
+        <div class="goalkeeper-grid" id="awayGoalkeeperGrid" role="group" aria-label="相手チームGKの背番号">
+          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="away" data-goalkeeper-no="1" aria-pressed="false">1</button>
+          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="away" data-goalkeeper-no="12" aria-pressed="false">12</button>
+          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="away" data-goalkeeper-no="16" aria-pressed="false">16</button>
+        </div>
+        <div class="status" id="awayGoalkeeperStatus">未選択</div>
+      </div>
+    </div>
+    <p class="subnote" style="margin-top:5px;">シュート記録には、攻撃側とは反対のチームで選択したGKを紐付けます。選択番号はチームごとに保持されます。</p>
+  </section>
+
+  <section class="panel">
+    <h2>選手選択</h2>
+
+    <div class="mode-controls">
+      <button type="button" id="registeredModeBtn">
+        詳細分析画面の入力参照
+      </button>
+
+      <button type="button" id="numberModeBtn" class="secondary">
+        背番号のみ（1～18）
+      </button>
+    </div>
+
+    <div class="player-grid" id="playerGrid"></div>
+
+    <div class="status" id="playerStatus">
+      選手未選択
+    </div>
+
+    <button type="button" id="undoBtn" class="secondary">
+      直近の記録を削除
+    </button>
+  </section>
+
+  <section class="panel">
+    <h2>イベント入力</h2>
+    <div class="result-grid">
+      <button type="button" id="successBtn" class="result-btn">
+        シュート成功
+      </button>
+
+      <button type="button" id="failureBtn" class="result-btn">
+        シュート失敗
+      </button>
+
+      <button type="button" id="warningBtn" class="result-btn secondary">
+        警告
+      </button>
+
+      <button type="button" id="disqualificationBtn" class="result-btn"
+              style="background:#7f1d1d">
+        退場
+      </button>
+    </div>
+
+    <div class="status" id="inputStatus">
+      選手を選択してイベントを記録してください。
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>ターンオーバー</h2>
+    <p class="subnote">
+      選手を選択せずに記録できます。
+    </p>
+
+    <button type="button" class="turnover-btn" id="turnoverBtn">
+      ターンオーバー
+    </button>
+  </section>
+
+  <section class="panel">
+    <h2>直近の記録
+      <span id="eventCount"
+            style="font-size:12px;color:#64748b;font-weight:500">
+      </span>
+    </h2>
+
+    <div class="event-list" id="eventList">
+      <div class="empty">まだイベントはありません。</div>
+    </div>
+
+    <div class="footer-actions" style="margin-top:10px">
+      <button type="button" class="secondary" id="refreshBtn">
+        データ再読み込み
+      </button>
+    </div>
+
+    <div class="status" id="saveStatus">
+      分析ツール v16 と共通の保存キー・イベント形式を使用します。
+    </div>
+  </section>
+
+  <div class="warning">
+    このページは分析ツール v16 と同じブラウザー・同じサイト（同一オリジン）内で開いてください。
+    試合履歴への確定保存は、従来どおり分析ツール v16 側で行ってください。
+  </div>
+
+</main>
+<script>
+"use strict";
+
+// 分析ツール v16 と共通の保存キー
+const STORAGE_KEY = "handball_analyze_offline_v4";
+
+// データ
+let data = {
+  players: [],
+  match: null,
+  events: []
+};
+
+// 攻撃権
+let possessionSide = "home";
+
+// 選手選択
+let playerMode = "registered";
+let selectedPlayer = null;
+let selectedGoalkeeperIds = { home: "", away: "" };
+let selectedGoalkeeperNos = { home: null, away: null };
+
+// 前後半
+let selectedPeriod = "前半";
+
+// タイマー
+let timerSeconds = 0;
+let timerStartedAt = 0;
+let timerRunning = false;
+let timerInterval = null;
+
+// v16互換：主タイマー停止後も、リセットまで連続記録時間を進める。
+let elapsedTimerSeconds = 0;
+let elapsedTimerStartedAt = 0;
+let elapsedTimerRunning = false;
+
+const $ = id => document.getElementById(id);
+
+
+// ------------------------------
+// データ読み込み・保存
+// ------------------------------
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+
+    if (raw) {
+      const parsed = JSON.parse(raw);
+
+      if (!parsed || typeof parsed !== "object") {
+        throw new Error("保存データの形式が不正です。");
+      }
+
+      data = parsed;
+
+      if (!Array.isArray(data.players)) {
+        data.players = [];
+      }
+
+      if (!Array.isArray(data.events)) {
+        data.events = [];
+      }
+
+      if (!data.match || typeof data.match !== "object") {
+        data.match = null;
+      }
+
+    } else {
+      data = {
+        players: [],
+        match: null,
+        events: []
+      };
+    }
+
+    renderPlayers();
+    renderPossession();
+    renderGoalkeepers();
+    renderEvents();
+
+    $("saveStatus").textContent =
+      "既存データを読み込みました。";
+
+  } catch (error) {
+    console.error(error);
+
+    $("saveStatus").textContent =
+      "保存データを読み込めませんでした。";
+  }
+}
+
+
+function saveData() {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(data)
+    );
+
+    $("saveStatus").textContent =
+      "保存済み · " +
+      new Date().toLocaleTimeString("ja-JP");
+
+    renderEvents();
+
+    return true;
+
+  } catch (error) {
+    console.error(error);
+
+    $("saveStatus").textContent =
+      "保存に失敗しました。";
+
+    alert("イベントを保存できませんでした。");
+
+    return false;
+  }
+}
+
+
+// ------------------------------
+// ID生成
+// ------------------------------
+
+function createId() {
+  if (window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  return Date.now() + "_" +
+    Math.random().toString(36).slice(2);
+}
+
+
+// ------------------------------
+// チーム・攻撃権
+// ------------------------------
+
+function getTeamName(side) {
+  if (side === "home") {
+    return data.match?.team || "自チーム";
+  }
+
+  return data.match?.opponent || "相手チーム";
+}
+
+
+function renderPossession() {
+  const display = $("possessionDisplay");
+  const homeActive = possessionSide === "home";
+  const awayActive = possessionSide === "away";
+  display.innerHTML = `
+    <div class="possession-team ${homeActive ? "active-home" : ""}">
+      <span class="team-label">自チーム：青</span>
+      <span class="team-state">${homeActive ? "攻撃中" : "攻撃権なし"}</span>
+    </div>
+    <div class="possession-team ${awayActive ? "active-away" : ""}">
+      <span class="team-label">相手チーム：赤</span>
+      <span class="team-state">${awayActive ? "攻撃中" : "攻撃権なし"}</span>
+    </div>`;
+}
+
+
+function switchPossession() {
+  possessionSide =
+    possessionSide === "home" ? "away" : "home";
+
+  selectedPlayer = null;
+
+  renderPossession();
+  renderPlayers();
+  renderGoalkeepers();
+}
+
+
+// ------------------------------
+// 対戦GK選択（v16のGK別集計に対応・番号選択を攻撃権切替後も保持）
+// ------------------------------
+
+function getOrCreateGoalkeeper(number, goalkeeperSide) {
+  let goalkeeper = data.players.find(p =>
+    p.side === goalkeeperSide &&
+    Number(p.no) === Number(number) &&
+    String(p.pos || "").trim().toUpperCase() === "GK"
+  );
+
+  // v16のGK別集計は players 内のGK IDと event.goalkeeperId を照合する。
+  if (!goalkeeper) {
+    goalkeeper = {
+      id: createId(),
+      side: goalkeeperSide,
+      no: String(number),
+      name: `GK #${number}`,
+      pos: "GK"
+    };
+    data.players.push(goalkeeper);
+    if (!saveData()) {
+      data.players.pop();
+      return null;
+    }
+  }
+  return goalkeeper;
+}
+
+function renderGoalkeepers() {
+  ["home", "away"].forEach(side => {
+    const grid = $(side + "GoalkeeperGrid");
+    const number = selectedGoalkeeperNos[side];
+    const selected = number === null ? null : getOrCreateGoalkeeper(number, side);
+    selectedGoalkeeperIds[side] = selected ? selected.id : "";
+
+    grid.querySelectorAll("[data-goalkeeper-no]").forEach(button => {
+      const active = number !== null && Number(button.dataset.goalkeeperNo) === Number(number);
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+
+    $(side + "GoalkeeperStatus").textContent = selected
+      ? `選択中：#${number}`
+      : "未選択";
+  });
+}
+
+function selectGoalkeeperByNumber(number, side) {
+  selectedGoalkeeperNos[side] = Number(number);
+  renderGoalkeepers();
+}
+
+
+// ------------------------------
+// 選手選択モード
+// ------------------------------
+
+function setPlayerMode(mode) {
+  playerMode = mode;
+  selectedPlayer = null;
+
+  $("registeredModeBtn").classList.toggle(
+    "active",
+    mode === "registered"
+  );
+
+  $("numberModeBtn").classList.toggle(
+    "active",
+    mode === "number"
+  );
+
+  renderPlayers();
+}
+
+
+function renderPlayers() {
+  const grid = $("playerGrid");
+
+  grid.innerHTML = "";
+
+  if (playerMode === "registered") {
+    const players = data.players
+      .filter(p => p.side === possessionSide)
+      .slice()
+      .sort((a, b) => Number(a.no) - Number(b.no));
+
+    if (!players.length) {
+      grid.innerHTML =
+        '<div class="empty">このチームの選手登録がありません。</div>';
+
+      $("playerStatus").textContent = "選手未選択";
+      return;
+    }
+
+    players.forEach(player => {
+      const button = document.createElement("button");
+
+      button.type = "button";
+
+      button.className =
+        "player-btn" +
+        (
+          selectedPlayer?.id === player.id
+            ? " active"
+            : ""
+        );
+
+      const number = document.createElement("span");
+      number.className = "number";
+      number.textContent =
+        player.no ? "#" + player.no : "—";
+
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = player.name || "氏名未登録";
+
+      button.append(number, name);
+
+      button.addEventListener("click", () => {
+        selectedPlayer = player;
+        renderPlayers();
+      });
+
+      grid.appendChild(button);
+    });
+
+  } else {
+
+    for (let no = 1; no <= 18; no++) {
+      const button = document.createElement("button");
+
+      button.type = "button";
+
+      button.className =
+        "player-btn" +
+        (
+          selectedPlayer?.no === no
+            ? " active"
+            : ""
+        );
+
+      button.textContent = String(no);
+
+      button.addEventListener("click", () => {
+        selectedPlayer = {
+          id: null,
+          no: no,
+          name: "",
+          side: possessionSide
+        };
+
+        renderPlayers();
+      });
+
+      grid.appendChild(button);
+    }
+  }
+
+  if (selectedPlayer) {
+    $("playerStatus").textContent =
+      "選択中：" +
+      (selectedPlayer.no ? "#" + selectedPlayer.no : "") +
+      (selectedPlayer.name ? " " + selectedPlayer.name : "");
+  } else {
+    $("playerStatus").textContent = "選手未選択";
+  }
+}
+
+
+function getSelectedPlayer() {
+  if (!selectedPlayer) {
+    return null;
+  }
+
+  if (playerMode === "registered") {
+    return selectedPlayer;
+  }
+
+  const registered = data.players.find(p =>
+    p.side === possessionSide &&
+    Number(p.no) === Number(selectedPlayer.no)
+  );
+
+  if (registered) {
+    return registered;
+  }
+
+  return {
+    id: "",
+    no: selectedPlayer.no,
+    name: "",
+    side: possessionSide
+  };
+}
+
+
+function clearPlayerSelection() {
+  selectedPlayer = null;
+  renderPlayers();
+}
+
+
+// ------------------------------
+// タイマー
+// ------------------------------
+
+function formatTime(seconds) {
+  const n = Math.max(0, Math.floor(Number(seconds) || 0));
+
+  return (
+    String(Math.floor(n / 60)).padStart(2, "0") +
+    ":" +
+    String(n % 60).padStart(2, "0")
+  );
+}
+
+
+function currentTimerSeconds() {
+  return timerRunning
+    ? timerSeconds +
+      Math.max(
+        0,
+        Math.floor((Date.now() - timerStartedAt) / 1000)
+      )
+    : timerSeconds;
+}
+
+function currentElapsedTimerSeconds() {
+  return elapsedTimerRunning
+    ? elapsedTimerSeconds +
+      Math.max(0, Math.floor((Date.now() - elapsedTimerStartedAt) / 1000))
+    : elapsedTimerSeconds;
+}
+
+
+function renderTimer() {
+  $("timerDisplay").textContent =
+    formatTime(currentTimerSeconds());
+
+  $("elapsedTimerDisplay").textContent =
+    "連続記録 " + formatTime(currentElapsedTimerSeconds());
+
+  $("timerStatus").textContent =
+    timerRunning ? "計測中" : "停止中";
+
+  $("startBtn").disabled = timerRunning;
+  $("stopBtn").disabled = !timerRunning;
+}
+
+
+function startTimer() {
+  if (timerRunning) return;
+
+  if (!elapsedTimerRunning) {
+    elapsedTimerRunning = true;
+    elapsedTimerStartedAt = Date.now();
+  }
+
+  timerRunning = true;
+  timerStartedAt = Date.now();
+
+  if (!timerInterval) {
+    timerInterval = setInterval(renderTimer, 200);
+  }
+
+  renderTimer();
+}
+
+
+function stopTimer() {
+  if (!timerRunning) return;
+
+  timerSeconds = currentTimerSeconds();
+  timerRunning = false;
+  timerStartedAt = 0;
+
+  renderTimer();
+}
+
+
+function resetTimer() {
+  if (!confirm("タイマーを00:00に戻しますか？")) {
+    return;
+  }
+
+  timerRunning = false;
+  timerSeconds = 0;
+  timerStartedAt = 0;
+  elapsedTimerRunning = false;
+  elapsedTimerSeconds = 0;
+  elapsedTimerStartedAt = 0;
+
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+
+  renderTimer();
+}
+
+
+function toggleTimerCorrection() {
+  const panel = $("timerCorrectionPanel");
+
+  const isHidden = panel.style.display === "none";
+
+  if (isHidden) {
+    const current = currentTimerSeconds();
+
+    $("correctionMinutes").value =
+      Math.floor(current / 60);
+
+    $("correctionSeconds").value =
+      current % 60;
+  }
+
+  panel.style.display =
+    isHidden ? "block" : "none";
+}
+
+
+function applyTimerCorrection() {
+  const minutes = Number($("correctionMinutes").value);
+  const seconds = Number($("correctionSeconds").value);
+
+  if (
+    !Number.isInteger(minutes) ||
+    !Number.isInteger(seconds) ||
+    minutes < 0 ||
+    seconds < 0 ||
+    seconds > 59
+  ) {
+    alert("正しい時間を入力してください。");
+    return;
+  }
+
+  timerSeconds = minutes * 60 + seconds;
+
+  if (timerRunning) {
+    timerStartedAt = Date.now();
+  }
+
+  renderTimer();
+
+  $("timerCorrectionPanel").style.display = "none";
+}
+
+
+// ------------------------------
+// 前後半
+// ------------------------------
+
+function setPeriod(period) {
+  selectedPeriod = period;
+
+  document.querySelectorAll("[data-period]").forEach(btn => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.period === period
+    );
+  });
+}
+
+
+// ------------------------------
+// イベント作成
+// ------------------------------
+
+function createEvent(type, player) {
+  const now = new Date();
+  const time = formatTime(currentTimerSeconds());
+
+  return {
+    id: createId(),
+
+    period: selectedPeriod,
+
+    time: time,
+
+    elapsedTime: formatTime(currentElapsedTimerSeconds()),
+
+    playerId:
+      player?.id ||
+      (player?.no != null ? "unknown_" + possessionSide : ""),
+
+    playerNo: player?.no ?? null,
+
+    side: possessionSide,
+
+    goalkeeperId:
+      (type === "shot_goal" || type === "shot_miss")
+        ? (selectedGoalkeeperIds[possessionSide === "home" ? "away" : "home"] || "")
+        : "",
+
+    opponentPlayerId: "",
+    blockOutcome: "",
+
+    type: type,
+
+    detail: "",
+
+    x: null,
+    y: null,
+    gx: null,
+    gy: null,
+    goalSide: null,
+
+    createdAt: now.toISOString()
+  };
+}
+
+
+// ------------------------------
+// 通常イベント記録
+// ------------------------------
+
+function recordEvent(type) {
+  const player = getSelectedPlayer();
+
+  if (!player) {
+    alert("選手を選択してください。");
+    return;
+  }
+
+  const event = createEvent(type, player);
+
+  data.events.push(event);
+
+  if (!saveData()) {
+    data.events.pop();
+    return;
+  }
+
+  if (type === "shot_goal") {
+    switchPossession();
+  }
+
+  clearPlayerSelection();
+
+  $("inputStatus").textContent =
+    formatTime(currentTimerSeconds()) +
+    " に記録しました。";
+}
+
+
+// ------------------------------
+// ターンオーバー記録
+// ------------------------------
+
+function recordTurnover() {
+  const event = createEvent("turnover", null);
+
+  data.events.push(event);
+
+  if (!saveData()) {
+    data.events.pop();
+    return;
+  }
+
+  switchPossession();
+
+  $("inputStatus").textContent =
+    "ターンオーバーを記録しました。";
+}
+
+
+// ------------------------------
+// イベント表示
+// ------------------------------
+
+function eventLabel(event) {
+  const labels = {
+    shot_goal: "シュート成功",
+    shot_miss: "シュート失敗",
+    warning: "警告",
+    disqualification: "退場",
+    turnover: "ターンオーバー"
+  };
+
+  return labels[event.type] || event.type;
+}
+
+
+function playerLabel(event) {
+  if (event.playerNo != null) {
+    const player = data.players.find(p =>
+      p.id === event.playerId
+    );
+
+    if (player) {
+      return (
+        "#" + player.no + " " +
+        (player.name || "")
+      );
+    }
+
+    return "#" + event.playerNo;
+  }
+
+  if (!event.playerId) {
+    return "選手指定なし";
+  }
+
+  const player = data.players.find(p =>
+    p.id === event.playerId
+  );
+
+  if (!player) {
+    return "選手不明";
+  }
+
+  return (
+    (player.no ? "#" + player.no + " " : "") +
+    (player.name || "")
+  );
+}
+
+
+function renderEvents() {
+  const list = $("eventList");
+
+  list.innerHTML = "";
+
+  const events = data.events.slice(-5).reverse();
+
+  $("eventCount").textContent =
+    "（全" + data.events.length + "件）";
+
+  if (!events.length) {
+    list.innerHTML =
+      '<div class="empty">まだイベントはありません。</div>';
+    return;
+  }
+
+  events.forEach(event => {
+    const row = document.createElement("div");
+    row.className = "event-item";
+
+    const time = document.createElement("div");
+    time.className = "event-time";
+    time.textContent = event.time || "--:--";
+
+    const main = document.createElement("div");
+    main.className = "event-main";
+
+    const desc = document.createElement("div");
+    desc.className = "event-desc";
+
+    desc.textContent =
+      playerLabel(event) + " → " + eventLabel(event);
+
+    const meta = document.createElement("div");
+    meta.className = "event-meta";
+
+    meta.textContent =
+      (event.period || "前後半不明") +
+      " · " +
+      getTeamName(event.side);
+
+    main.append(desc, meta);
+    row.append(time, main);
+    list.appendChild(row);
+  });
+}
+
+
+// ------------------------------
+// 直近イベント削除
+// ------------------------------
+
+function undoLastEvent() {
+  if (!data.events.length) {
+    alert("削除できる記録がありません。");
+    return;
+  }
+
+  const last = data.events[data.events.length - 1];
+
+  if (
+    !confirm(
+      (last.time || "") + " " +
+      eventLabel(last) +
+      " の記録を削除しますか？"
+    )
+  ) {
+    return;
+  }
+
+  data.events.pop();
+
+  if (!saveData()) {
+    data.events.push(last);
+    return;
+  }
+
+  if (
+    last.type === "shot_goal" ||
+    last.type === "turnover"
+  ) {
+    possessionSide = last.side;
+  }
+
+  renderPossession();
+  renderPlayers();
+  renderGoalkeepers();
+}
+
+
+// ------------------------------
+// イベント登録
+// ------------------------------
+
+$("startBtn").addEventListener("click", startTimer);
+$("stopBtn").addEventListener("click", stopTimer);
+$("resetBtn").addEventListener("click", resetTimer);
+
+document.querySelectorAll("[data-period]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    setPeriod(btn.dataset.period);
+  });
+});
+
+$("correctionToggleBtn").addEventListener(
+  "click",
+  toggleTimerCorrection
+);
+
+$("applyCorrectionBtn").addEventListener(
+  "click",
+  applyTimerCorrection
+);
+
+$("switchPossessionBtn").addEventListener(
+  "click",
+  switchPossession
+);
+
+$("registeredModeBtn").addEventListener(
+  "click",
+  () => setPlayerMode("registered")
+);
+
+$("numberModeBtn").addEventListener(
+  "click",
+  () => setPlayerMode("number")
+);
+
+document.querySelectorAll("[data-goalkeeper-no]").forEach(button => {
+  button.addEventListener("click", () => {
+    selectGoalkeeperByNumber(
+      Number(button.dataset.goalkeeperNo),
+      button.dataset.goalkeeperSide
+    );
+  });
+});
+
+$("successBtn").addEventListener(
+  "click",
+  () => recordEvent("shot_goal")
+);
+
+$("failureBtn").addEventListener(
+  "click",
+  () => recordEvent("shot_miss")
+);
+
+$("warningBtn").addEventListener(
+  "click",
+  () => recordEvent("warning")
+);
+
+$("disqualificationBtn").addEventListener(
+  "click",
+  () => recordEvent("disqualification")
+);
+
+$("turnoverBtn").addEventListener(
+  "click",
+  recordTurnover
+);
+
+$("undoBtn").addEventListener(
+  "click",
+  undoLastEvent
+);
+
+$("refreshBtn").addEventListener(
+  "click",
+  loadData
+);
+
+
+// ------------------------------
+// 初期化
+// ------------------------------
+
+loadData();
+
+setPeriod("前半");
+setPlayerMode("registered");
+
+renderPossession();
+renderGoalkeepers();
+renderTimer();
+
+</script>
+</body>
+</html>
