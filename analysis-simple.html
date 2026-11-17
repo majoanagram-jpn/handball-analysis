@@ -140,7 +140,7 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
 .event-desc{font-weight:700;font-size:14px;overflow-wrap:anywhere}
 .event-meta{font-size:11px;color:#64748b;margin-top:2px}
 .undo-btn{background:#f1f5f9;color:#334155;padding:8px 10px;font-size:12px}
-.empty{font-size:13px;color:#64748b;text-align:center;padding:px 8px}
+.empty{font-size:13px;color:#64748b;text-align:center;padding:8px}
 .status{font-size:12px;color:#475569;margin-top:9px;min-height:1.3em}
 .footer-actions{display:flex;gap:8px;flex-wrap:wrap}
 .footer-actions button{flex:1}
@@ -646,7 +646,8 @@ function getOrCreateGoalkeeper(number, goalkeeperSide) {
       side: goalkeeperSide,
       no: String(number),
       name: `GK #${number}`,
-      pos: "GK"
+      pos: "GK",
+      quickGoalkeeper: true
     };
     data.players.push(goalkeeper);
     if (!saveData()) {
@@ -656,7 +657,19 @@ function getOrCreateGoalkeeper(number, goalkeeperSide) {
   }
   return goalkeeper;
 }
+function isQuickGoalkeeper(player) {
+  if (!player) return false;
 
+  if (player.quickGoalkeeper === true) {
+    return true;
+  }
+
+  // 以前のバージョンで生成されたGKデータへの対応
+  return (
+    String(player.pos || "").trim().toUpperCase() === "GK" &&
+    player.name === `GK #${player.no}`
+  );
+}
 function renderGoalkeepers() {
   ["home", "away"].forEach(side => {
     renderGoalkeeperSide(side);
@@ -688,11 +701,11 @@ function renderGoalkeeperSide(side) {
     const goalkeepers = data.players
       .filter(p =>
         p.side === side &&
-        String(p.pos || "").trim().toUpperCase() === "GK"
+        String(p.pos || "").trim().toUpperCase() === "GK" &&
+        !isQuickGoalkeeper(p)
       )
       .slice()
       .sort((a, b) => Number(a.no) - Number(b.no));
-
     if (!goalkeepers.length) {
       grid.innerHTML =
         '<div class="empty">登録されたGKがいません。</div>';
@@ -846,7 +859,10 @@ function renderPlayers() {
 
   if (playerMode === "registered") {
     const players = data.players
-      .filter(p => p.side === possessionSide)
+      .filter(p =>
+        p.side === possessionSide &&
+        String(p.pos || "").trim().toUpperCase() !== "GK"
+      )
       .slice()
       .sort((a, b) => Number(a.no) - Number(b.no));
 
@@ -1410,15 +1426,6 @@ $("numberModeBtn").addEventListener(
   "click",
   () => setPlayerMode("number")
 );
-
-document.querySelectorAll("[data-goalkeeper-no]").forEach(button => {
-  button.addEventListener("click", () => {
-    selectGoalkeeperByNumber(
-      Number(button.dataset.goalkeeperNo),
-      button.dataset.goalkeeperSide
-    );
-  });
-});
 $("homeGKRegisteredModeBtn").addEventListener(
   "click",
   () => setGoalkeeperMode("home", "registered")
