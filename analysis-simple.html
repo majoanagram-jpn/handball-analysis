@@ -236,6 +236,17 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
 #warningBtn {
   background: #d97706;
 }
+.possession-lock-btn {
+  width: 100%;
+  margin-top: 7px;
+  background: #64748b;
+  color: #fff;
+}
+
+.possession-lock-btn.active {
+  background: #b42318;
+  color: #fff;
+}  
 </style>
 </head>
 <body>
@@ -291,6 +302,13 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
     <h2>攻撃権</h2>
     <div id="possessionDisplay" class="possession-display" aria-live="polite"></div>
     <button type="button" id="switchPossessionBtn" class="secondary">攻撃権を手動で切り替え</button>
+    <button
+  type="button"
+  id="possessionLockBtn"
+  class="possession-lock-btn"
+  aria-pressed="false">
+  攻撃権を固定
+</button>
     <div class="goalkeeper-groups">
   <div class="goalkeeper-group">
     <div class="goalkeeper-group-title">自チームGK</div>
@@ -464,7 +482,8 @@ let data = {
 
 // 攻撃権
 let possessionSide = "home";
-
+// 攻撃権固定
+let possessionLocked = false;
 // 選手選択
 let playerMode = "registered";
 let selectedPlayer = null;
@@ -604,15 +623,57 @@ function renderPossession() {
   const display = $("possessionDisplay");
   const homeActive = possessionSide === "home";
   const awayActive = possessionSide === "away";
-  display.innerHTML = `
-    <div class="possession-team ${homeActive ? "active-home" : ""}">
-      <span class="team-label">自チーム：青</span>
-      <span class="team-state">${homeActive ? "攻撃中" : "攻撃権なし"}</span>
-    </div>
-    <div class="possession-team ${awayActive ? "active-away" : ""}">
-      <span class="team-label">相手チーム：赤</span>
-      <span class="team-state">${awayActive ? "攻撃中" : "攻撃権なし"}</span>
-    </div>`;
+
+  display.innerHTML = "";
+
+  const teams = [
+    {
+      side: "home",
+      name: getTeamName("home"),
+      active: homeActive
+    },
+    {
+      side: "away",
+      name: getTeamName("away"),
+      active: awayActive
+    }
+  ];
+
+  teams.forEach(team => {
+    const element = document.createElement("div");
+
+    element.className =
+      "possession-team " +
+      (
+        team.active
+          ? team.side === "home"
+            ? "active-home"
+            : "active-away"
+          : ""
+      );
+
+    const label = document.createElement("span");
+    label.className = "team-label";
+    label.textContent =
+      team.name +
+      (team.side === "home" ? "：青" : "：赤");
+
+    const state = document.createElement("span");
+    state.className = "team-state";
+    state.textContent =
+      team.active ? "攻撃中" : "攻撃権なし";
+
+    element.append(label, state);
+    display.appendChild(element);
+  });
+
+  const lockBtn = $("possessionLockBtn");
+
+  lockBtn.classList.toggle("active", possessionLocked);
+  lockBtn.setAttribute(
+    "aria-pressed",
+    possessionLocked ? "true" : "false"
+  );
 }
 
 
@@ -626,7 +687,10 @@ function switchPossession() {
   renderPlayers();
   renderGoalkeepers();
 }
-
+function togglePossessionLock() {
+  possessionLocked = !possessionLocked;
+  renderPossession();
+}
 
 // ------------------------------
 // 対戦GK選択（v16のGK別集計に対応・番号選択を攻撃権切替後も保持）
@@ -1213,9 +1277,9 @@ function recordEvent(type) {
     return;
   }
 
-  if (type === "shot_goal") {
-    switchPossession();
-  }
+  if (type === "shot_goal" && !possessionLocked) {
+  switchPossession();
+}
 
   clearPlayerSelection();
 
@@ -1239,10 +1303,14 @@ function recordTurnover() {
     return;
   }
 
+ if (!possessionLocked) {
   switchPossession();
+} else {
+  clearPlayerSelection();
+}
 
-  $("inputStatus").textContent =
-    "ターンオーバーを記録しました。";
+$("inputStatus").textContent =
+  "ターンオーバーを記録しました。";
 }
 
 
@@ -1416,7 +1484,10 @@ $("switchPossessionBtn").addEventListener(
   "click",
   switchPossession
 );
-
+$("possessionLockBtn").addEventListener(
+  "click",
+  togglePossessionLock
+);
 $("registeredModeBtn").addEventListener(
   "click",
   () => setPlayerMode("registered")
