@@ -39,6 +39,28 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
 .goalkeeper-groups{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .goalkeeper-group{min-width:0;border:1px solid #e2e8f0;border-radius:10px;padding:8px}
 .goalkeeper-group-title{font-size:12px;font-weight:800;margin-bottom:6px}
+.goalkeeper-mode-controls {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 7px;
+}
+
+.goalkeeper-mode-controls button {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 4px;
+  font-size: 11px;
+  background: #64748b;
+  color: #fff;
+  border: 2px solid #64748b;
+}
+
+.goalkeeper-mode-controls button.active {
+  background: #1769aa;
+  border-color: #0b4774;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px #bfdbfe;
+}
 .goalkeeper-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0}
 .goalkeeper-btn{min-height:54px;background:#e8edf2;color:#17202a;border:2px solid transparent;font-size:20px;font-weight:800}
 .goalkeeper-btn.active{background:#dbeafe;border-color:#1769aa;color:#0b4774}
@@ -214,25 +236,56 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
     <div id="possessionDisplay" class="possession-display" aria-live="polite"></div>
     <button type="button" id="switchPossessionBtn" class="secondary">攻撃権を手動で切り替え</button>
     <div class="goalkeeper-groups">
-      <div class="goalkeeper-group">
-        <div class="goalkeeper-group-title">自チームGK</div>
-        <div class="goalkeeper-grid" id="homeGoalkeeperGrid" role="group" aria-label="自チームGKの背番号">
-          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="home" data-goalkeeper-no="1" aria-pressed="false">1</button>
-          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="home" data-goalkeeper-no="12" aria-pressed="false">12</button>
-          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="home" data-goalkeeper-no="16" aria-pressed="false">16</button>
-        </div>
-        <div class="status" id="homeGoalkeeperStatus">未選択</div>
-      </div>
-      <div class="goalkeeper-group">
-        <div class="goalkeeper-group-title">相手チームGK</div>
-        <div class="goalkeeper-grid" id="awayGoalkeeperGrid" role="group" aria-label="相手チームGKの背番号">
-          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="away" data-goalkeeper-no="1" aria-pressed="false">1</button>
-          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="away" data-goalkeeper-no="12" aria-pressed="false">12</button>
-          <button type="button" class="goalkeeper-btn" data-goalkeeper-side="away" data-goalkeeper-no="16" aria-pressed="false">16</button>
-        </div>
-        <div class="status" id="awayGoalkeeperStatus">未選択</div>
-      </div>
+  <div class="goalkeeper-group">
+    <div class="goalkeeper-group-title">自チームGK</div>
+
+    <div class="goalkeeper-mode-controls">
+      <button type="button"
+              id="homeGKRegisteredModeBtn">
+        入力参照
+      </button>
+      <button type="button"
+              id="homeGKNumberModeBtn">
+        1・12・16
+      </button>
     </div>
+
+    <div class="goalkeeper-grid"
+         id="homeGoalkeeperGrid"
+         role="group"
+         aria-label="自チームGKの背番号">
+    </div>
+
+    <div class="status" id="homeGoalkeeperStatus">
+      未選択
+    </div>
+  </div>
+
+  <div class="goalkeeper-group">
+    <div class="goalkeeper-group-title">相手チームGK</div>
+
+    <div class="goalkeeper-mode-controls">
+      <button type="button"
+              id="awayGKRegisteredModeBtn">
+        入力参照
+      </button>
+      <button type="button"
+              id="awayGKNumberModeBtn">
+        1・12・16
+      </button>
+    </div>
+
+    <div class="goalkeeper-grid"
+         id="awayGoalkeeperGrid"
+         role="group"
+         aria-label="相手チームGKの背番号">
+    </div>
+
+    <div class="status" id="awayGoalkeeperStatus">
+      未選択
+    </div>
+  </div>
+</div>
     <p class="subnote" style="margin-top:5px;">シュート記録には、攻撃側とは反対のチームで選択したGKを紐付けます。選択番号はチームごとに保持されます。</p>
   </section>
 
@@ -361,7 +414,10 @@ let playerMode = "registered";
 let selectedPlayer = null;
 let selectedGoalkeeperIds = { home: "", away: "" };
 let selectedGoalkeeperNos = { home: null, away: null };
-
+let goalkeeperModes = {
+  home: "registered",
+  away: "registered"
+};
 // 前後半
 let selectedPeriod = "前半";
 
@@ -548,18 +604,101 @@ function getOrCreateGoalkeeper(number, goalkeeperSide) {
 function renderGoalkeepers() {
   ["home", "away"].forEach(side => {
     const grid = $(side + "GoalkeeperGrid");
-    const number = selectedGoalkeeperNos[side];
-    const selected = number === null ? null : getOrCreateGoalkeeper(number, side);
-    selectedGoalkeeperIds[side] = selected ? selected.id : "";
+    const mode = goalkeeperModes[side];
 
-    grid.querySelectorAll("[data-goalkeeper-no]").forEach(button => {
-      const active = number !== null && Number(button.dataset.goalkeeperNo) === Number(number);
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", active ? "true" : "false");
-    });
+    const registeredBtn = $(side + "GKRegisteredModeBtn");
+    const numberBtn = $(side + "GKNumberModeBtn");
+
+    registeredBtn.classList.toggle(
+      "active",
+      mode === "registered"
+    );
+
+    numberBtn.classList.toggle(
+      "active",
+      mode === "number"
+    );
+
+    grid.innerHTML = "";
+
+    if (mode === "registered") {
+      const goalkeepers = data.players
+        .filter(p =>
+          p.side === side &&
+          String(p.pos || "").trim().toUpperCase() === "GK"
+        )
+        .slice()
+        .sort((a, b) => Number(a.no) - Number(b.no));
+
+      goalkeepers.forEach(player => {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "goalkeeper-btn";
+
+        const active =
+          selectedGoalkeeperIds[side] === player.id;
+
+        button.classList.toggle("active", active);
+        button.setAttribute(
+          "aria-pressed",
+          active ? "true" : "false"
+        );
+
+        button.textContent =
+          "#" + player.no;
+
+        button.addEventListener("click", () => {
+          selectedGoalkeeperIds[side] = player.id;
+          selectedGoalkeeperNos[side] = Number(player.no);
+          renderGoalkeepers();
+        });
+
+        grid.appendChild(button);
+      });
+
+    } else {
+      [1, 12, 16].forEach(number => {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "goalkeeper-btn";
+        button.textContent = String(number);
+
+        const active =
+          selectedGoalkeeperNos[side] === number;
+
+        button.classList.toggle("active", active);
+        button.setAttribute(
+          "aria-pressed",
+          active ? "true" : "false"
+        );
+
+        button.addEventListener("click", () => {
+          selectGoalkeeperByNumber(number, side);
+        });
+function setGoalkeeperMode(side, mode) {
+  goalkeeperModes[side] = mode;
+
+  selectedGoalkeeperIds[side] = "";
+  selectedGoalkeeperNos[side] = null;
+
+  renderGoalkeepers();
+}
+        grid.appendChild(button);
+      });
+    }
+
+    const selectedId = selectedGoalkeeperIds[side];
+
+    const selected = data.players.find(p =>
+      p.id === selectedId &&
+      p.side === side &&
+      String(p.pos || "").trim().toUpperCase() === "GK"
+    );
 
     $(side + "GoalkeeperStatus").textContent = selected
-      ? `選択中：#${number}`
+      ? `選択中：#${selected.no}`
       : "未選択";
   });
 }
@@ -1172,7 +1311,25 @@ document.querySelectorAll("[data-goalkeeper-no]").forEach(button => {
     );
   });
 });
+$("homeGKRegisteredModeBtn").addEventListener(
+  "click",
+  () => setGoalkeeperMode("home", "registered")
+);
 
+$("homeGKNumberModeBtn").addEventListener(
+  "click",
+  () => setGoalkeeperMode("home", "number")
+);
+
+$("awayGKRegisteredModeBtn").addEventListener(
+  "click",
+  () => setGoalkeeperMode("away", "registered")
+);
+
+$("awayGKNumberModeBtn").addEventListener(
+  "click",
+  () => setGoalkeeperMode("away", "number")
+);
 $("successBtn").addEventListener(
   "click",
   () => recordEvent("shot_goal")
