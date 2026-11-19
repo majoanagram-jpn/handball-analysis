@@ -1039,8 +1039,9 @@ function finishTimeout() {
   renderTimeoutButton();
   renderReferenceTimers();
 
-  // タイムアウト終了時は、停止していた試合時計を再開する。
-  startTimer();
+  // タイムアウト終了後も試合時計は停止状態を維持する。
+  // 再開はユーザーが「開始」を選択した場合のみ行う。
+  renderTimer();
 }
 
 
