@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<title>ハンドボール試合分析ツール v17</title>
+<title>ハンドボール試合分析ツール v17.1</title>
 <meta property="og:site_name" content="試合分析ツールforハンドボール">
 <meta property="og:title" content="試合分析ツールforハンドボール">
 <meta property="og:description" content="ハンドボールの記録・分析ツール">
@@ -280,7 +280,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v17｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v17.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -1271,7 +1271,7 @@ function refreshGoalkeeperSelect(){
 
     option.textContent=
       (p.no ? `#${p.no} ` : "")+
-      p.name+
+      (p._jerseyOnly ? "背番号のみ" : p.name)+
       (p.pos ? ` (${p.pos})` : "");
 
     sel.appendChild(option);
@@ -1829,7 +1829,7 @@ function renderShotAnalysis(){
    */
   if(playerFilter){
     shots=shots.filter(
-      e=>e.playerId===playerFilter
+      e=>isShotFilterMatch(e,playerFilter)
     );
   }
 
@@ -1948,9 +1948,11 @@ if(e.side==="home"){
       );
 
     const playerText=
-      p
-        ? `#${p.no||""} ${p.name}`
-        : "削除済み";
+      isJerseyOnlyEvent(e)
+        ? `#${e.playerNo}（背番号のみ）`
+        : p
+          ? `#${p.no||""} ${p.name}`
+          : "削除済み";
 
     marker.title=
       `${playerText} / `+
@@ -2009,6 +2011,13 @@ if(e.side==="home"){
 
 }
 function playerName(id){if(String(id||"").startsWith("unknown_"))return "選手不明";const p=data.players.find(p=>p.id===id);return p?p.name:"削除済み"}
+// 簡易版の背番号のみ記録（playerId=unknown_side + playerNo）を詳細分析でも識別する。
+function isJerseyOnlyEvent(e){return e&&e.playerNo!=null&&String(e.playerId||"").startsWith("unknown_")&&!data.players.some(p=>p.id===e.playerId);}
+function eventPlayerName(e){if(isJerseyOnlyEvent(e))return `#${e.playerNo}（背番号のみ）`;return playerName(e.playerId);}
+function jerseyOnlyPlayerKey(side,no){return `__jersey_only_${side}_${String(no)}`;}
+function getJerseyOnlyStatsPlayers(){const seen=new Set();const out=[];data.events.forEach(e=>{if(!isJerseyOnlyEvent(e))return;const key=`${e.side}_${String(e.playerNo)}`;if(seen.has(key))return;seen.add(key);out.push({id:jerseyOnlyPlayerKey(e.side,e.playerNo),side:e.side,no:e.playerNo,name:"背番号のみ",pos:"",_jerseyOnly:true});});return out;}
+function isEventForStatsPlayer(e,p){if(p?._jerseyOnly)return isJerseyOnlyEvent(e)&&e.side===p.side&&String(e.playerNo)===String(p.no);return e.playerId===p.id;}
+function isShotFilterMatch(e,filter){if(String(filter).startsWith("__jersey_only_")){const parts=filter.match(/^__jersey_only_(home|away)_(.*)$/);return !!parts&&isJerseyOnlyEvent(e)&&e.side===parts[1]&&String(e.playerNo)===parts[2];}return e.playerId===filter;}
 function teamName(side){return side==="home"?(data.match?.team||"自チーム"):(data.match?.opponent||"相手チーム")}
 function editCourtPosition(eventId){
 
@@ -2287,7 +2296,7 @@ function renderEvents(){
 <td>${e.period==="一本"?"":esc(e.period||"-")}</td>
 <td>${esc(shownTime)}</td>
 <td>${esc(teamName(e.side))}</td>
-<td>${esc(playerName(e.playerId))}</td>
+<td>${esc(eventPlayerName(e))}</td>
 <td>${e.goalkeeperId ? esc(playerName(e.goalkeeperId)) : "-"}</td>
 <td>${e.opponentPlayerId ? esc(playerName(e.opponentPlayerId)) : "-"}</td>
 <td>${e.type==="shot_block"&&e.opponentPlayerId?1:"-"}</td>
@@ -2310,7 +2319,7 @@ function renderScore(){
 }
 function calc(p, periodOverride){
  const periodFilter=periodOverride ?? (document.getElementById("statsPeriodFilter")?.value||"all");
- const ev=data.events.filter(e=>e.playerId===p.id&&(periodFilter==="all"||e.period===periodFilter));
+ const ev=data.events.filter(e=>isEventForStatsPlayer(e,p)&&(periodFilter==="all"||e.period===periodFilter));
  const turnoverFilter=document.getElementById("statsTurnoverDetailFilter")?.value||"all";
  const turnoverEvents=ev.filter(e=>e.type==="turnover"||e.type==="miss"||e.type==="foul");
  const filteredTurnovers=turnoverFilter==="all"?turnoverEvents:turnoverEvents.filter(e=>(e.detail||"")===turnoverFilter);
@@ -2341,8 +2350,8 @@ function calc(p, periodOverride){
 let statsSortDirection=1;
 function getStatsSortValue(p,s,key){switch(key){case "team":return teamName(p.side);case "no":return Number.isFinite(Number(p.no))?Number(p.no):Infinity;case "name":return p.name||"";case "pos":return p.pos||"";case "rate":return s.shots ? Number(s.rate.replace("%","")) : -1;default:return s[key]??0;}}
 function toggleStatsSortDirection(){statsSortDirection*=-1;const b=document.getElementById("statsSortDirection");if(b)b.textContent=statsSortDirection===1?"昇順 ↑":"降順 ↓";renderStats();}
-function getSortedStatsPlayers(){const key=document.getElementById("statsSortKey")?.value||"no";const showOwn=document.getElementById("statsShowOwn")?.checked!==false;const showOpponent=document.getElementById("statsShowOpponent")?.checked!==false;const players=data.players.filter(p=>{if(isZeroNumberPlayer(p))return false;if(p.side==="home")return showOwn;if(p.side==="away")return showOpponent;return true;});return players.slice().sort((a,b)=>{const sa=calc(a),sb=calc(b),av=getStatsSortValue(a,sa,key),bv=getStatsSortValue(b,sb,key);if(typeof av==="number"&&typeof bv==="number"){if(av!==bv)return(av-bv)*statsSortDirection;}else{const c=String(av).localeCompare(String(bv),"ja");if(c!==0)return c*statsSortDirection;}const an=Number(a.no),bn=Number(b.no);if(Number.isFinite(an)&&Number.isFinite(bn)&&an!==bn)return an-bn;return String(a.name||"").localeCompare(String(b.name||""),"ja");});}
-function renderStats(){const tb=document.getElementById("stats");if(!tb)return;tb.innerHTML="";const filter=document.getElementById("statsTurnoverDetailFilter")?.value||"all";getSortedStatsPlayers().forEach(p=>{const s=calc(p);if(filter!=="all"){const ev=data.events.filter(e=>e.playerId===p.id&&(document.getElementById("statsPeriodFilter")?.value==="all"||e.period===document.getElementById("statsPeriodFilter")?.value));const has=filter==="pass_cut"?ev.some(e=>e.type==="pass_cut"):ev.some(e=>(e.type==="turnover"||e.type==="miss"||e.type==="foul")&&(e.detail||"")===filter);if(!has)return;}const tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(p.side))}</td><td>${esc(p.no)}</td><td>${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${s.goals}</td><td>${s.shots}</td><td>${s.rate}</td><td>${s.save}</td><td>${s.missshot}</td><td>${s.turn}</td><td>${s.passcut}</td><td>${s.seven}</td>`;tb.appendChild(tr);});}
+function getSortedStatsPlayers(){const key=document.getElementById("statsSortKey")?.value||"no";const showOwn=document.getElementById("statsShowOwn")?.checked!==false;const showOpponent=document.getElementById("statsShowOpponent")?.checked!==false;const players=data.players.filter(p=>{if(isZeroNumberPlayer(p))return false;if(p.side==="home")return showOwn;if(p.side==="away")return showOpponent;return true;}).concat(getJerseyOnlyStatsPlayers().filter(p=>p.side==="home"?showOwn:showOpponent));return players.slice().sort((a,b)=>{const sa=calc(a),sb=calc(b),av=getStatsSortValue(a,sa,key),bv=getStatsSortValue(b,sb,key);if(typeof av==="number"&&typeof bv==="number"){if(av!==bv)return(av-bv)*statsSortDirection;}else{const c=String(av).localeCompare(String(bv),"ja");if(c!==0)return c*statsSortDirection;}const an=Number(a.no),bn=Number(b.no);if(Number.isFinite(an)&&Number.isFinite(bn)&&an!==bn)return an-bn;return String(a.name||"").localeCompare(String(b.name||""),"ja");});}
+function renderStats(){const tb=document.getElementById("stats");if(!tb)return;tb.innerHTML="";const filter=document.getElementById("statsTurnoverDetailFilter")?.value||"all";getSortedStatsPlayers().forEach(p=>{const s=calc(p);if(filter!=="all"){const ev=data.events.filter(e=>isEventForStatsPlayer(e,p)&&(document.getElementById("statsPeriodFilter")?.value==="all"||e.period===document.getElementById("statsPeriodFilter")?.value));const has=filter==="pass_cut"?ev.some(e=>e.type==="pass_cut"):ev.some(e=>(e.type==="turnover"||e.type==="miss"||e.type==="foul")&&(e.detail||"")===filter);if(!has)return;}const tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(p.side))}</td><td>${esc(p.no)}</td><td>${esc(p._jerseyOnly?"背番号のみ":p.name)}</td><td>${esc(p.pos)}</td><td>${s.goals}</td><td>${s.shots}</td><td>${s.rate}</td><td>${s.save}</td><td>${s.missshot}</td><td>${s.turn}</td><td>${s.passcut}</td><td>${s.seven}</td>`;tb.appendChild(tr);});}
 function renderGoalkeeperStats(){const tb=document.getElementById("goalkeeperStats");if(!tb)return;tb.innerHTML="";const periodFilter=document.getElementById("goalkeeperStatsPeriodFilter")?.value||"all";const goalkeepers=sortPlayersByNumber(data.players.filter(p=>(p.pos==="GK"||p.pos==="GK ")&&!isZeroNumberPlayer(p)));goalkeepers.forEach(gk=>{const shots=data.events.filter(e=>e.goalkeeperId===gk.id&&(periodFilter==="all"||e.period===periodFilter)&&(e.type==="shot_goal"||e.type==="shot_save"||e.type==="shot_miss"||e.type==="shot_block"));const saves=shots.filter(e=>e.type==="shot_save").length,goals=shots.filter(e=>e.type==="shot_goal").length,misses=shots.filter(e=>e.type==="shot_miss").length,rate=shots.length?(saves/shots.length*100).toFixed(1)+"%":"-";const tr=document.createElement("tr");tr.innerHTML=`<td>${esc(teamName(gk.side))}</td><td>${esc(gk.no||"")}</td><td>${esc(gk.name||"")}</td><td>${shots.length}</td><td>${saves}</td><td>${goals}</td><td>${misses}</td><td>${rate}</td>`;tb.appendChild(tr);});}
 function renderTeamKPI(){
   const shotTypes=["shot_goal","shot_save","shot_miss","shot_block","goal"];
@@ -2484,7 +2493,7 @@ function refreshShotFilterPlayers(){
   all.textContent="全選手";
   sel.appendChild(all);
 
-  let players=data.players.filter(p=>!isZeroNumberPlayer(p));
+  let players=data.players.filter(p=>!isZeroNumberPlayer(p)).concat(getJerseyOnlyStatsPlayers());
 
   if(teamFilter){
 
@@ -2506,7 +2515,7 @@ function refreshShotFilterPlayers(){
 
     option.textContent=
       (p.no ? `#${p.no} ` : "")+
-      p.name+
+      (p._jerseyOnly ? "背番号のみ" : p.name)+
       (p.pos ? ` (${p.pos})` : "");
 
     sel.appendChild(option);
@@ -2563,7 +2572,7 @@ function refreshShotFilterGoalkeepers(){
 
     option.textContent=
       (p.no ? `#${p.no} ` : "")+
-      p.name+
+      (p._jerseyOnly ? "背番号のみ" : p.name)+
       (p.pos ? ` (${p.pos})` : "");
 
     sel.appendChild(option);
@@ -2690,13 +2699,13 @@ function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 
 function eventRows(){
  return data.events.map(e=>[
-  e.time,teamName(e.side),playerName(e.playerId),e.goalkeeperId?playerName(e.goalkeeperId):"",e.opponentPlayerId?playerName(e.opponentPlayerId):"",e.type==="shot_block"&&e.opponentPlayerId?1:"",eventName(e)+(e.type==="shot_block"?`（${e.blockOutcome==="continue"?"オフェンス継続":e.blockOutcome==="end"?"オフェンス終了":"未設定"}）`:""),e.detail||"",
+  e.time,teamName(e.side),eventPlayerName(e),e.goalkeeperId?playerName(e.goalkeeperId):"",e.opponentPlayerId?playerName(e.opponentPlayerId):"",e.type==="shot_block"&&e.opponentPlayerId?1:"",eventName(e)+(e.type==="shot_block"?`（${e.blockOutcome==="continue"?"オフェンス継続":e.blockOutcome==="end"?"オフェンス終了":"未設定"}）`:""),e.detail||"",
   e.x==null?"":`${e.x}%`,e.y==null?"":`${e.y}%`,
   e.goalSide?` ${e.goalSide}`:"",e.gx??"",e.gy??""
  ]);
 }
 function statsRows(){
- return getSortedStatsPlayers().map(p=>{const s=calc(p);return [teamName(p.side),p.no,p.name,p.pos,s.goals,s.shots,s.rate,s.save,s.missshot,s.turn,s.passcut,s.seven]});
+ return getSortedStatsPlayers().map(p=>{const s=calc(p);return [teamName(p.side),p.no,p._jerseyOnly?"背番号のみ":p.name,p.pos,s.goals,s.shots,s.rate,s.save,s.missshot,s.turn,s.passcut,s.seven]});
 }
 function tsv(rows){return rows.map(r=>r.map(v=>String(v??"").replace(/\t/g," ").replace(/\r?\n/g," ")).join("\t")).join("\r\n")}
 function allTSV(){
