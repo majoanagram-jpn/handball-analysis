@@ -280,7 +280,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v17.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v17.2｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -304,7 +304,7 @@ details > summary::marker {
   <div class="team-box">
     <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
       <h3 style="margin:0">自チーム</h3>
-      <button type="button" class="small danger" onclick="clearTeamPlayers('home')">自チームを一括削除</button>
+      <button type="button" class="small" onclick="registerVirtualRoster('home')">仮フィル登録</button><button type="button" class="small danger" onclick="clearTeamPlayers('home')">自チームを一括削除</button>
     </div>
     <div class="row">
       <div class="field"><label>背番号</label><input id="myNo" type="number" min="0"></div>
@@ -317,7 +317,7 @@ details > summary::marker {
   <div class="team-box">
     <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
       <h3 style="margin:0">相手チーム</h3>
-      <button type="button" class="small danger" onclick="clearTeamPlayers('away')">相手チームを一括削除</button>
+      <button type="button" class="small" onclick="registerVirtualRoster('away')">仮フィル登録</button><button type="button" class="small danger" onclick="clearTeamPlayers('away')">相手チームを一括削除</button>
     </div>
     <div class="row">
       <div class="field"><label>背番号</label><input id="oppNo" type="number" min="0"></div>
@@ -1127,6 +1127,19 @@ function saveMatch(){
   venue:document.getElementById("venue").value.trim()
  };
  save();
+}
+function registerVirtualRoster(side){
+ const label=side==="home"?"自チーム":"相手チーム";
+ const existing=new Set(data.players.filter(p=>p.side===side&&p.no!=null&&String(p.no).trim()!=="")).map(p=>String(p.no).trim());
+ const added=[];
+ for(let no=1;no<=18;no++){
+  if(existing.has(String(no)))continue;
+  data.players.push({id:crypto.randomUUID?crypto.randomUUID():Date.now()+"_"+Math.random(),side,no:String(no),name:`#${no}`,pos:(no===1||no===12)?"GK":""});
+  added.push(no);
+ }
+ save();
+ alert(added.length?`${label}に仮フィルを${added.length}人登録しました。
+追加番号：${added.join(", ")}`:`${label}には背番号1～18が既に登録されています。`);
 }
 function addPlayer(side){
  const pre=side==="home"?"my":"opp";
@@ -2011,13 +2024,15 @@ if(e.side==="home"){
 
 }
 function playerName(id){if(String(id||"").startsWith("unknown_"))return "選手不明";const p=data.players.find(p=>p.id===id);return p?p.name:"削除済み"}
-// 簡易版の背番号のみ記録（playerId=unknown_side + playerNo）を詳細分析でも識別する。
-function isJerseyOnlyEvent(e){return e&&e.playerNo!=null&&String(e.playerId||"").startsWith("unknown_")&&!data.players.some(p=>p.id===e.playerId);}
-function eventPlayerName(e){if(isJerseyOnlyEvent(e))return `#${e.playerNo}（背番号のみ）`;return playerName(e.playerId);}
+// 簡易版の背番号のみイベントは、チーム＋背番号で登録選手へ自動照合する。
+function isNumberOnlyEvent(e){return e&&e.playerNo!=null&&String(e.playerId||"").startsWith("unknown_")&&!data.players.some(p=>p.id===e.playerId);}
+function findRegisteredPlayerByJersey(e){if(!isNumberOnlyEvent(e))return null;return data.players.find(p=>p.side===e.side&&String(p.no)===String(e.playerNo))||null;}
+function isJerseyOnlyEvent(e){return isNumberOnlyEvent(e)&&!findRegisteredPlayerByJersey(e);}
+function eventPlayerName(e){const matched=findRegisteredPlayerByJersey(e);if(matched)return matched.name;if(isJerseyOnlyEvent(e))return `#${e.playerNo}（背番号のみ）`;return playerName(e.playerId);}
 function jerseyOnlyPlayerKey(side,no){return `__jersey_only_${side}_${String(no)}`;}
 function getJerseyOnlyStatsPlayers(){const seen=new Set();const out=[];data.events.forEach(e=>{if(!isJerseyOnlyEvent(e))return;const key=`${e.side}_${String(e.playerNo)}`;if(seen.has(key))return;seen.add(key);out.push({id:jerseyOnlyPlayerKey(e.side,e.playerNo),side:e.side,no:e.playerNo,name:"背番号のみ",pos:"",_jerseyOnly:true});});return out;}
-function isEventForStatsPlayer(e,p){if(p?._jerseyOnly)return isJerseyOnlyEvent(e)&&e.side===p.side&&String(e.playerNo)===String(p.no);return e.playerId===p.id;}
-function isShotFilterMatch(e,filter){if(String(filter).startsWith("__jersey_only_")){const parts=filter.match(/^__jersey_only_(home|away)_(.*)$/);return !!parts&&isJerseyOnlyEvent(e)&&e.side===parts[1]&&String(e.playerNo)===parts[2];}return e.playerId===filter;}
+function isEventForStatsPlayer(e,p){if(p?._jerseyOnly)return isJerseyOnlyEvent(e)&&e.side===p.side&&String(e.playerNo)===String(p.no);return e.playerId===p.id||(findRegisteredPlayerByJersey(e)?.id===p.id);}
+function isShotFilterMatch(e,filter){if(String(filter).startsWith("__jersey_only_")){const parts=filter.match(/^__jersey_only_(home|away)_(.*)$/);return !!parts&&isJerseyOnlyEvent(e)&&e.side===parts[1]&&String(e.playerNo)===parts[2];}return e.playerId===filter||findRegisteredPlayerByJersey(e)?.id===filter;}
 function teamName(side){return side==="home"?(data.match?.team||"自チーム"):(data.match?.opponent||"相手チーム")}
 function editCourtPosition(eventId){
 
