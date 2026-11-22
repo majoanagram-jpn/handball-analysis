@@ -321,99 +321,6 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
     font-size: 9px;
   }
 }
-  /* タイムアウトボタン */
-.timeout-header-btn {
-  background: #d97706;
-  color: #fff;
-}
-
-.timeout-header-btn.active {
-  background: #b91c1c;
-  box-shadow: inset 0 0 0 2px #fecaca;
-}
-
-/* 参考タイマー表示 */
-.reference-timers {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 8px;
-}
-
-.reference-timer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 150px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #334155;
-  color: #fff;
-  flex: 1;
-}
-
-.reference-timer.timeout {
-  background: #92400e;
-}
-
-.reference-timer.disqualification {
-  background: #7f1d1d;
-}
-
-.reference-timer-info {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.reference-timer-title {
-  font-size: 10px;
-  color: #e2e8f0;
-}
-
-.reference-timer-name {
-  font-size: 12px;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.reference-timer-time {
-  font-size: 19px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-@media(max-width:600px) {
-  .timeout-header-btn {
-    padding: 6px 8px;
-    font-size: 11px;
-  }
-
-  .reference-timers {
-    gap: 5px;
-    margin-top: 5px;
-  }
-
-  .reference-timer {
-    min-width: 120px;
-    padding: 5px 7px;
-    gap: 6px;
-  }
-
-  .reference-timer-title {
-    font-size: 9px;
-  }
-
-  .reference-timer-name {
-    font-size: 10px;
-  }
-
-  .reference-timer-time {
-    font-size: 16px;
-  }
-}
 </style>
 </head>
 <body>
@@ -429,9 +336,6 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
         <button id="stopBtn" type="button">停止</button>
         <button id="resetBtn" type="button">リセット</button>
         <button id="correctionToggleBtn" type="button">時間修正</button>
-        <button id="timeoutBtn" type="button" class="timeout-header-btn">
-  タイムアウト
-</button>
       </div>
       <div class="scoreboard">
   <div class="score-team">
@@ -457,7 +361,6 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
 </div>
       <span id="elapsedTimerDisplay">連続記録 00:00</span><span id="timerStatus">停止中</span>
     </div>
-      <div id="referenceTimers" class="reference-timers"></div>
   </div>
 <div id="timerCorrectionPanel"
      style="display:none;padding:8px 14px 12px;max-width:900px;margin:auto;">
@@ -671,11 +574,8 @@ let data = {
 let possessionSide = "home";
 // 攻撃権固定
 let possessionLocked = false;
-// 選手選択モード（チームごとに保持）
-let playerModes = {
-  home: "registered",
-  away: "registered"
-};
+// 選手選択
+let playerMode = "registered";
 let selectedPlayer = null;
 let selectedGoalkeeperIds = { home: "", away: "" };
 let selectedGoalkeeperNos = { home: null, away: null };
@@ -742,7 +642,6 @@ function loadData() {
     renderGoalkeepers();
     renderEvents();
     renderScore();
-    renderReferenceTimers();
 
     $("saveStatus").textContent =
       "既存データを読み込みました。";
@@ -768,9 +667,8 @@ function saveData() {
       new Date().toLocaleTimeString("ja-JP");
 
     renderEvents();
-renderReferenceTimers();
 
-return true;
+    return true;
 
   } catch (error) {
     console.error(error);
@@ -847,7 +745,9 @@ function renderPossession() {
 
     const label = document.createElement("span");
     label.className = "team-label";
-    label.textContent = team.name;
+    label.textContent =
+      team.name +
+      (team.side === "home" ? "：青" : "：赤");
 
     const state = document.createElement("span");
     state.className = "team-state";
@@ -953,217 +853,6 @@ function renderScore(previousScore = null) {
     }, 2500);
   }
 }
-
-// ------------------------------
-// 試合中の参考タイマー
-// ------------------------------
-
-const DISQUALIFICATION_DURATION = 120;
-const TIMEOUT_DURATION = 60;
-
-let referenceTimerInterval = null;
-let timeoutActive = false;
-let timeoutStartedAt = 0;
-
-
-// 実時間を基準にした残り時間（旧データ互換用）
-function getRemainingSeconds(event, duration) {
-  const createdAt = new Date(event.createdAt).getTime();
-
-  if (!Number.isFinite(createdAt)) {
-    return 0;
-  }
-
-  const elapsed = Math.floor(
-    (Date.now() - createdAt) / 1000
-  );
-
-  return Math.max(0, duration - elapsed);
-}
-
-
-// 退場タイマーは試合時計の進行分だけ減算する
-function getDisqualificationRemainingSeconds(event) {
-  if (event.referenceTimerReset) {
-    return 0;
-  }
-
-  let eventMatchSeconds = Number(event.matchTimerSeconds);
-
-  // 旧データに matchTimerSeconds がない場合は、記録時刻から復元
-  if (!Number.isFinite(eventMatchSeconds)) {
-    const parts = String(event.time || "").split(":").map(Number);
-    if (parts.length === 2 && parts.every(Number.isFinite)) {
-      eventMatchSeconds = parts[0] * 60 + parts[1];
-    } else {
-      return 0;
-    }
-  }
-
-  const elapsed = Math.max(
-    0,
-    Math.floor(currentTimerSeconds() - eventMatchSeconds)
-  );
-
-  return Math.max(0, DISQUALIFICATION_DURATION - elapsed);
-}
-
-
-// タイムアウトは開始時刻だけを保持し、終了はボタン操作で行う。
-function timeoutElapsedSeconds() {
-  if (!timeoutActive || !timeoutStartedAt) return 0;
-
-  return Math.max(
-    0,
-    Math.floor((Date.now() - timeoutStartedAt) / 1000)
-  );
-}
-
-
-function renderTimeoutButton() {
-  const button = $("timeoutBtn");
-  button.classList.toggle("active", timeoutActive);
-  button.textContent = timeoutActive
-    ? "タイムアウト中"
-    : "タイムアウト";
-  button.setAttribute("aria-pressed", timeoutActive ? "true" : "false");
-}
-
-
-function finishTimeout() {
-  if (!timeoutActive) return;
-
-  timeoutActive = false;
-  timeoutStartedAt = 0;
-
-  renderTimeoutButton();
-  renderReferenceTimers();
-
-  // タイムアウト終了後も試合時計は停止状態を維持する。
-  // 再開はユーザーが「開始」を選択した場合のみ行う。
-  renderTimer();
-}
-
-
-// 参考タイマー表示
-function renderReferenceTimers() {
-  const container = $("referenceTimers");
-  container.innerHTML = "";
-
-  const activeTimers = [];
-
-  if (timeoutActive) {
-    activeTimers.push({
-      type: "timeout",
-      remaining: timeoutElapsedSeconds(),
-      title: "タイムアウト中",
-      name: "経過時間"
-    });
-  }
-
-  data.events.forEach(event => {
-    if (event.type === "disqualification") {
-      const remaining = getDisqualificationRemainingSeconds(event);
-
-      if (remaining > 0) {
-        activeTimers.push({
-          type: "disqualification",
-          event,
-          remaining,
-          title: "退場",
-          name:
-            playerLabel(event) +
-            " · " +
-            getTeamName(event.side)
-        });
-      }
-    }
-  });
-
-  // 退場タイマーは記録順に表示。タイムアウトは先頭に表示
-  activeTimers.sort((a, b) => {
-    if (a.type === "timeout") return -1;
-    if (b.type === "timeout") return 1;
-    return new Date(a.event.createdAt) - new Date(b.event.createdAt);
-  });
-
-  activeTimers.forEach(timer => {
-    const row = document.createElement("div");
-
-    row.className =
-      "reference-timer " + timer.type;
-
-    const info = document.createElement("div");
-    info.className = "reference-timer-info";
-
-    const title = document.createElement("span");
-    title.className = "reference-timer-title";
-    title.textContent = timer.title;
-
-    const name = document.createElement("span");
-    name.className = "reference-timer-name";
-    name.textContent = timer.name;
-
-    const time = document.createElement("span");
-    time.className = "reference-timer-time";
-    time.textContent = formatTime(timer.remaining);
-
-    info.append(title, name);
-    row.append(info, time);
-
-    container.appendChild(row);
-  });
-}
-
-
-// タイマー更新を開始
-function startReferenceTimerUpdates() {
-  if (referenceTimerInterval) {
-    clearInterval(referenceTimerInterval);
-  }
-
-  renderReferenceTimers();
-
-  referenceTimerInterval = setInterval(() => {
-    // タイムアウトは開始から60秒で自動解除する。
-    if (timeoutActive && timeoutElapsedSeconds() >= TIMEOUT_DURATION) {
-      finishTimeout();
-    }
-
-    renderReferenceTimers();
-  }, 1000);
-}
-
-
-// タイムアウトを開始／解除（イベント記録には追加しない）
-function toggleTimeout() {
-  if (timeoutActive) {
-    finishTimeout();
-    $("inputStatus").textContent = "タイムアウトを解除しました。";
-    return;
-  }
-
-  // タイムアウト中は試合時計を停止する。
-  timeoutActive = true;
-  timeoutStartedAt = Date.now();
-
-  stopTimer();
-
-  // 開始時刻をイベントとして記録する。終了イベントは作成しない。
-  const timeoutEvent = createEvent("timeout", null);
-  timeoutEvent.createdAt = new Date(timeoutStartedAt).toISOString();
-  data.events.push(timeoutEvent);
-
-  if (!saveData()) {
-    data.events.pop();
-  }
-
-  renderTimeoutButton();
-  renderTimer();
-  renderReferenceTimers();
-  $("inputStatus").textContent = "タイムアウトを開始しました。";
-}
-
 // ------------------------------
 // 対戦GK選択（v16のGK別集計に対応・番号選択を攻撃権切替後も保持）
 // ------------------------------
@@ -1371,27 +1060,27 @@ function selectGoalkeeperByNumber(number, side) {
 // ------------------------------
 
 function setPlayerMode(mode) {
-  // 現在攻撃権のあるチームの選択モードだけを変更する。
-  playerModes[possessionSide] = mode;
+  playerMode = mode;
   selectedPlayer = null;
+
+  $("registeredModeBtn").classList.toggle(
+    "active",
+    mode === "registered"
+  );
+
+  $("numberModeBtn").classList.toggle(
+    "active",
+    mode === "number"
+  );
+
   renderPlayers();
 }
 
 
 function renderPlayers() {
   const grid = $("playerGrid");
-  const playerMode = playerModes[possessionSide] || "registered";
 
   grid.innerHTML = "";
-
-  $("registeredModeBtn").classList.toggle(
-    "active",
-    playerMode === "registered"
-  );
-  $("numberModeBtn").classList.toggle(
-    "active",
-    playerMode === "number"
-  );
 
   if (playerMode === "registered") {
     const players = data.players
@@ -1490,8 +1179,6 @@ function getSelectedPlayer() {
     return null;
   }
 
-  const playerMode = playerModes[possessionSide] || "registered";
-
   if (playerMode === "registered") {
     return selectedPlayer;
   }
@@ -1563,13 +1250,13 @@ function renderTimer() {
   $("timerStatus").textContent =
     timerRunning ? "計測中" : "停止中";
 
-  $("startBtn").disabled = timerRunning || timeoutActive;
+  $("startBtn").disabled = timerRunning;
   $("stopBtn").disabled = !timerRunning;
 }
 
 
 function startTimer() {
-  if (timerRunning || timeoutActive) return;
+  if (timerRunning) return;
 
   if (!elapsedTimerRunning) {
     elapsedTimerRunning = true;
@@ -1599,7 +1286,7 @@ function stopTimer() {
 
 
 function resetTimer() {
-  if (!confirm("試合時計を00:00に戻し、退場・タイムアウトの参考計時をリセットしますか？")) {
+  if (!confirm("タイマーを00:00に戻しますか？")) {
     return;
   }
 
@@ -1610,29 +1297,12 @@ function resetTimer() {
   elapsedTimerSeconds = 0;
   elapsedTimerStartedAt = 0;
 
-  // タイムアウト状態を解除
-  timeoutActive = false;
-  timeoutStartedAt = 0;
-  renderTimeoutButton();
-
-  // 開始イベントの履歴は保持し、参考タイマーだけを解除する。
-  data.events.forEach(event => {
-    if (
-      event.type === "disqualification" ||
-      event.type === "timeout"
-    ) {
-      event.referenceTimerReset = true;
-    }
-  });
-
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
   }
 
   renderTimer();
-  saveData();
-  renderReferenceTimers();
 }
 
 
@@ -1714,9 +1384,6 @@ function createEvent(type, player) {
 
     time: time,
 
-    // 退場参考タイマーを試合時計に同期するための記録値
-    matchTimerSeconds: currentTimerSeconds(),
-
     elapsedTime: formatTime(currentElapsedTimerSeconds()),
 
     playerId:
@@ -1736,6 +1403,8 @@ function createEvent(type, player) {
     blockOutcome: "",
 
     type: type,
+
+    recordMode: "simple",
 
     detail: "",
 
@@ -1822,8 +1491,7 @@ function eventLabel(event) {
     shot_miss: "シュート失敗",
     warning: "警告",
     disqualification: "退場",
-    turnover: "ターンオーバー",
-    timeout: "タイムアウト",
+    turnover: "ターンオーバー"
   };
 
   return labels[event.type] || event.type;
@@ -2064,11 +1732,6 @@ $("refreshBtn").addEventListener(
   loadData
 );
 
-$("timeoutBtn").addEventListener(
-  "click",
-  toggleTimeout
-);
-
 
 // ------------------------------
 // 初期化
@@ -2082,8 +1745,6 @@ setPlayerMode("registered");
 renderPossession();
 renderGoalkeepers();
 renderTimer();
-renderTimeoutButton();
-startReferenceTimerUpdates();
 
 </script>
 </body>
