@@ -280,7 +280,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v17.6｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v17.7｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -571,6 +571,7 @@ details > summary::marker {
 <th>ブロック数</th>
 <th>イベント種別</th>
 <th>詳細な記録</th>
+<th>位置登録状況</th>
 <th>操作</th></tr></thead><tbody id="events"></tbody></table></div>
 </details>
 
@@ -2289,6 +2290,16 @@ function setEventTimeMode(mode){
   if(header)header.textContent=eventTimeMode==="continuous"?"連続時間":"登録時間";
   renderEvents();
 }
+function shotLocationRegistrationStatus(e){
+ const isShot=["shot_goal","shot_save","shot_miss","shot_block","goal"].includes(e.type);
+ if(!isShot)return "-";
+ const shotPosition=e.x!=null&&e.y!=null&&e.x!==""&&e.y!=="";
+ const goalCourse=e.gx!=null&&e.gy!=null&&e.gx!==""&&e.gy!=="";
+ if(!shotPosition&&!goalCourse)return "未登録";
+ if(shotPosition&&!goalCourse)return "シュート位置のみ";
+ if(!shotPosition&&goalCourse)return "シュートコースのみ";
+ return "登録済";
+}
 function renderEvents(){
  const tb=document.getElementById("events");if(!tb)return;tb.innerHTML="";
  const selectedPeriod=document.getElementById("eventsPeriodFilter")?.value||"all";
@@ -2313,6 +2324,7 @@ function renderEvents(){
 <td>${e.type==="shot_block"&&e.opponentPlayerId?1:"-"}</td>
 <td>${esc(eventName(e))}${e.type==="shot_block"?`（${e.blockOutcome==="continue"?"オフェンス継続":e.blockOutcome==="end"?"オフェンス終了":"未設定"}）`:""}</td>
 <td>${esc(e.detail||"-")}</td>
+<td>${esc(shotLocationRegistrationStatus(e))}</td>
 <td><button class="small" onclick="editEvent('${e.id}')">編集</button> <button class="small danger" onclick="deleteEvent('${e.id}')">削除</button></td>`;
   tb.appendChild(tr);
  });
@@ -2708,7 +2720,7 @@ function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 
 function eventRows(){
  return data.events.map(e=>[
-  e.time,teamName(e.side),eventPlayerName(e),e.goalkeeperId?playerName(e.goalkeeperId):"",e.opponentPlayerId?playerName(e.opponentPlayerId):"",e.type==="shot_block"&&e.opponentPlayerId?1:"",eventName(e)+(e.type==="shot_block"?`（${e.blockOutcome==="continue"?"オフェンス継続":e.blockOutcome==="end"?"オフェンス終了":"未設定"}）`:""),e.detail||""
+  e.time,teamName(e.side),eventPlayerName(e),e.goalkeeperId?playerName(e.goalkeeperId):"",e.opponentPlayerId?playerName(e.opponentPlayerId):"",e.type==="shot_block"&&e.opponentPlayerId?1:"",eventName(e)+(e.type==="shot_block"?`（${e.blockOutcome==="continue"?"オフェンス継続":e.blockOutcome==="end"?"オフェンス終了":"未設定"}）`:""),e.detail||"",shotLocationRegistrationStatus(e)
  ]);
 }
 function statsRows(){
@@ -2719,7 +2731,7 @@ function allTSV(){
  const m=data.match||{};
  return [
   "【試合情報】","自チーム\t"+(m.team||""),"相手チーム\t"+(m.opponent||""),"日付\t"+(m.date||""),"会場\t"+(m.venue||""),
-  "","【イベント一覧】",tsv([["時間","チーム","選手","GK","相手選手","ブロック数","種別","詳細な記録"],...eventRows()]),
+  "","【イベント一覧】",tsv([["時間","チーム","選手","GK","相手選手","ブロック数","種別","詳細な記録","位置登録状況"],...eventRows()]),
   "","【選手別集計】",tsv([["チーム","背番号","氏名","位置","得点","シュート","成功率","GKセーブ","枠外","ターンオーバー","パスカット","7m"],...statsRows()])
  ].join("\r\n");
 }
@@ -2736,7 +2748,7 @@ async function copyText(txt){
  }
 }
 function copyTSV(kind){
- if(kind==="events")copyText(tsv([["時間","チーム","選手","GK","相手選手","ブロック数","種別","詳細な記録"],...eventRows()]));
+ if(kind==="events")copyText(tsv([["時間","チーム","選手","GK","相手選手","ブロック数","種別","詳細な記録","位置登録状況"],...eventRows()]));
  else if(kind==="stats")copyText(tsv([["チーム","背番号","氏名","位置","得点","シュート","成功率","GKセーブ","枠外","ターンオーバー","パスカット","7m"],...statsRows()]));
  else copyText(allTSV());
 }
