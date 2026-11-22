@@ -280,7 +280,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v17.7｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v17.8｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -2421,13 +2421,16 @@ function renderTeamKPI(){
     const responsibilityToPer50=turnoverDenominator?(turnoverTotal/turnoverDenominator*50).toFixed(1):"-";
     const turnoverLabel=selectedPosition==="all"?"ターンオーバー＋被パスカット数":"ターンオーバー数";
     const possessionEvents=events.filter(e=>e.side===side.key&&(selectedPosition==="all"||positionOf(e)===selectedPosition));
-    const possessionCount=
-      possessionEvents.filter(e=>e.type==="turnover"||e.type==="miss"||e.type==="foul").length+
-      possessionEvents.filter(e=>e.type==="shot_goal"||e.type==="goal").length+
-      possessionEvents.filter(e=>e.type==="pass_cut").length+
-      possessionEvents.filter(e=>e.type==="shot_miss").length+
-      possessionEvents.filter(e=>e.type==="shot_save").length+
-      possessionEvents.filter(e=>e.type==="shot_block"&&e.blockOutcome==="end").length;
+    const hasSimpleRecords=possessionEvents.some(e=>e.recordMode==="simple");
+    const possessionCount=hasSimpleRecords
+      ? possessionEvents.filter(e=>e.recordMode==="simple"&&(e.type==="turnover"||e.type==="miss"||e.type==="foul")).length+
+        possessionEvents.filter(e=>e.recordMode==="simple"&&(e.type==="shot_goal"||e.type==="goal")).length
+      : possessionEvents.filter(e=>e.type==="turnover"||e.type==="miss"||e.type==="foul").length+
+        possessionEvents.filter(e=>e.type==="shot_goal"||e.type==="goal").length+
+        possessionEvents.filter(e=>e.type==="pass_cut").length+
+        possessionEvents.filter(e=>e.type==="shot_miss").length+
+        possessionEvents.filter(e=>e.type==="shot_save").length+
+        possessionEvents.filter(e=>e.type==="shot_block"&&e.blockOutcome==="end").length;
     const turnoverRate=pct(turnoverTotal,possessionCount);
     const toPer50=possessionCount?(turnoverTotal/possessionCount*50).toFixed(1):"-";
     const teamGks=data.players.filter(p=>p.side===side.key&&String(p.pos||"").trim().toUpperCase()==="GK");
