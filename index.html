@@ -302,16 +302,16 @@ details > summary::marker {
 .goal-course-overview .shot-zone-table tbody{height:100%;}
 .goal-course-overview .shot-zone-table tr{height:33.333%;}
 .goal-course-overview .shot-zone-table td{width:33.333%;height:33.333%;}
-.goal-course-map-wrap{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;}
-#shotGoalDistributionImage{display:block;width:100%;height:100%;object-fit:contain;}
-#shotGoalDistributionMarkers{position:absolute;inset:0;pointer-events:none;}
-.goal-course-point{position:absolute;width:13px;height:13px;border:2px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #222;opacity:.85;}
+.goal-course-map-wrap{position:relative;width:100%;overflow:hidden;}
+#shotGoalDistributionImage{display:block;width:100%;height:auto;object-fit:fill;}
+#shotGoalDistributionMarkers{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.goal-course-point{position:absolute;width:13px;height:13px;border:2px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #222;opacity:.85;box-sizing:border-box;}
 @media(max-width:700px){.goal-course-display{flex-direction:column;gap:12px}.goal-course-overview,.goal-course-map-panel{width:100%;}.goal-course-map-wrap{max-width:430px;margin:auto;}}
 
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v18.4｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v18.8.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -1810,8 +1810,9 @@ function shotEventType(e){
  */
 
 let shotDetailSelectedEventId="";
-// v18.4: shot-course coordinates are the new source of truth; legacy zone-only data is intentionally discarded.
-if(!data.__shotCourseV182){data.events.forEach(e=>{if(isShotEvent(e)){delete e.goalZone;delete e.gx;delete e.gy;delete e.goalSide;}});data.__shotCourseV182=true;localStorage.setItem(KEY,JSON.stringify(data));}
+// v18.8.1: compatibility migration marker only. Preserve legacy shot-course fields
+// (goalZone / gx / gy / goalSide) so v18.5 and earlier data is not destroyed.
+if(!data.__shotCourseV182){data.__shotCourseV182=true;localStorage.setItem(KEY,JSON.stringify(data));}
 let shotDetailCourtPickActive=false;
 let playerEditMode=false;
 let eventEditMode=false;
