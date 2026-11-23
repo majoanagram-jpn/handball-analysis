@@ -465,7 +465,7 @@ details > summary::marker {
   選手・シュート結果で絞り込むことができます。
 </p>
 <div id="courtWrap">
-  <img id="courtImg" alt="ハンドボールコート" src="" onclick="courtClick(event)">
+  <img id="courtImg" alt="ハンドボールコート" src="">
   <div id="courtMarker" class="marker hidden"></div>
 </div>
 
@@ -543,7 +543,7 @@ details > summary::marker {
 </div>
 
 </details>
-<details>
+<details open>
 <summary>7. イベント一覧</summary>
 <div class="row" style="justify-content:flex-end;align-items:center;margin-bottom:10px">
   <button type="button" class="small danger" onclick="clearAllEvents()">イベント一覧を一括削除</button>
@@ -632,17 +632,29 @@ details > summary::marker {
 <summary>12. 過去の試合</summary>
 
   <div class="row" style="align-items:flex-start;flex-direction:column;gap:8px">
-  <button onclick="renderMatchHistory()">試合履歴を更新</button>
-  <button type="button" id="jsonLoadMenuToggle" class="secondary" onclick="toggleJsonLoadMenu()">JSON読み込み ▾</button>
-  <div id="jsonLoadMenu" class="hidden row" style="gap:8px;padding:8px;border:1px solid #bbb;border-radius:8px">
-    <button class="good" onclick="backupMatchHistory()">全試合をJSON保存</button>
-    <button type="button" class="secondary" onclick="showBackupJson()">文字JSON出力</button>
-    <button type="button" class="secondary" onclick="showRestoreTextPanel()">文字JSON取り込み</button>
-    <label class="button" style="display:inline-block;padding:8px 12px;border-radius:6px;background:#15803d;color:#fff;cursor:pointer;">
-      JSON追加読み込み
-      <input type="file" accept=".json,application/json" onchange="appendMatchHistory(this.files[0]);this.value='';" style="display:none;">
-    </label>
-  </div>
+  <button onclick="renderMatchHistory()">
+    試合履歴を更新
+  </button>
+
+  <button class="good" onclick="backupMatchHistory()">
+    全試合をJSON保存
+  </button>
+  <button type="button" class="secondary" style="padding:4px 7px;font-size:12px;min-height:30px" onclick="showBackupJson()">
+    文字JSON出力
+  </button>
+  <button type="button" class="secondary" style="padding:4px 7px;font-size:12px;min-height:30px" onclick="showRestoreTextPanel()">
+    文字JSON取り込み
+  </button>
+
+  <label class="button" style="display:inline-block;padding:8px 12px;border-radius:6px;background:#66727e;color:#fff;cursor:pointer;">
+    JSON復元（上書き）
+    <input type="file" accept=".json,application/json" onchange="restoreMatchHistory(this.files[0]);this.value='';" style="display:none;">
+  </label>
+
+  <label class="button" style="display:inline-block;padding:8px 12px;border-radius:6px;background:#15803d;color:#fff;cursor:pointer;">
+    JSON追加読み込み
+    <input type="file" accept=".json,application/json" onchange="appendMatchHistory(this.files[0]);this.value='';" style="display:none;">
+  </label>
 </div>
   <div id="restoreTextPanel" class="hidden" style="margin-top:12px;padding:10px;border:1px solid #bbb;border-radius:8px">
     <p><strong>文字形式のJSONから復元</strong></p>
@@ -1953,7 +1965,8 @@ function shotLocationRegistrationStatus(e){
 function renderEvents(){
  const tb=document.getElementById("events");if(!tb)return;tb.innerHTML="";
  const selectedPeriod=document.getElementById("eventsPeriodFilter")?.value||"all";
- const events=data.events.slice().filter(e=>selectedPeriod==="all"||e.period===selectedPeriod).sort((a,b)=>{
+ const sourceEvents=Array.isArray(data?.events)?data.events:[];
+ const events=sourceEvents.filter(e=>e&& (selectedPeriod==="all"||e.period===selectedPeriod)).sort((a,b)=>{
   const periodOrder={"前半":0,"後半":1};
   const pa=periodOrder[a.period] ?? 99;
   const pb=periodOrder[b.period] ?? 99;
