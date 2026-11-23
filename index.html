@@ -2190,14 +2190,14 @@ function editEvent(id){
  const e=data.events.find(e=>e.id===id);if(!e)return;
  const teamPlayers=sortPlayersByNumber(data.players.filter(p=>p.side===e.side&&!isZeroNumberPlayer(p)));
  const currentPlayer=data.players.find(p=>p.id===e.playerId)||findRegisteredPlayerByJersey(e);
- const curTime=String(e.time||'').split(':');let seconds=curTime.length===2&&curTime.every(v=>/^\d+$/.test(v))?Number(curTime[0])*60+Number(curTime[1]):0;seconds=Math.max(0,Math.min(1800,seconds));
+ const curTime=String(e.time||'').split(':');let minute=curTime.length===2&&curTime.every(v=>/^\d+$/.test(v))?Number(curTime[0]):0;let second=curTime.length===2&&curTime.every(v=>/^\d+$/.test(v))?Number(curTime[1]):0;minute=Math.max(0,Math.min(59,minute));second=Math.max(0,Math.min(59,second));
  const currentType=Math.max(0,EDIT_EVENT_TYPES.findIndex(t=>t.type===e.type));
  const periodOptions=['前半','後半','一本'];
  const details=['','パスミス','キャッチミス','オーバーステップ','オーバータイム','イリーガルドリブル','ラインクロス','チャージング','プッシング','ホールディング'];
- const timeOptions=[];for(let t=0;t<=1800;t+=30)timeOptions.push(t);if(!timeOptions.includes(seconds))timeOptions.push(seconds);timeOptions.sort((a,b)=>a-b);
- const timeSelect=timeOptions.map(t=>`<option value="${t}" ${seconds===t?'selected':''}>${formatSliderTime(t)}</option>`).join('');
+ const minuteSelect=Array.from({length:60},(_,m)=>`<option value="${m}" ${minute===m?'selected':''}>${String(m).padStart(2,'0')} 分</option>`).join('');
+ const secondSelect=Array.from({length:60},(_,s)=>`<option value="${s}" ${second===s?'selected':''}>${String(s).padStart(2,'0')} 秒</option>`).join('');
  const playerOptions=`<option value="">未指定</option>${teamPlayers.map(p=>`<option value="${esc(p.id)}" ${currentPlayer?.id===p.id?'selected':''}>#${esc(p.no)} ${esc(p.name)}</option>`).join('')}`;
- const html=`<div class="edit-field"><label>試合時間</label><select id="editTimeSelect">${timeSelect}</select><div class="note">30秒単位。既存の秒数も選択肢に保持します。</div></div>
+ const html=`<div class="edit-field"><label>試合時間</label><div class="row"><select id="editMinuteSelect" aria-label="分">${minuteSelect}</select><select id="editSecondSelect" aria-label="秒">${secondSelect}</select></div><div class="note">分・秒をそれぞれ選択します（0～59）。</div></div>
 <div class="edit-field"><label>前半・後半</label><select id="editPeriod">${periodOptions.map(v=>`<option value="${esc(v)}" ${e.period===v?'selected':''}>${esc(v)}</option>`).join('')}</select></div>
 <div class="edit-field"><label>イベント種別</label><select id="editTypeSelect">${EDIT_EVENT_TYPES.map((t,i)=>`<option value="${i}" ${i===currentType?'selected':''}>${esc(t.label)}</option>`).join('')}</select></div>
 <div class="edit-field"><label>対象選手</label><select id="editPlayerSelect">${playerOptions}</select></div>
@@ -2205,7 +2205,7 @@ function editEvent(id){
 <div class="edit-field"><label>GK（シュートイベント用）</label><select id="editGoalkeeper"><option value="">GKなし</option>${sortPlayersByNumber(data.players.filter(p=>p.side!==e.side&&!isZeroNumberPlayer(p))).map(g=>`<option value="${esc(g.id)}" ${e.goalkeeperId===g.id?'selected':''}>#${esc(g.no)} ${esc(g.name)}</option>`).join('')}</select></div>
 <div class="edit-field"><label>位置情報</label><div class="row"><button type="button" class="secondary" onclick="closeEditPanel();editCourtPosition('${id}')">コート位置を編集</button><button type="button" class="secondary" onclick="closeEditPanel();editGoalPosition('${id}')">ゴール位置を編集</button></div><div class="note">現在のコート位置・ゴール位置は保存状態を維持します。ボタンで必要な位置だけ再登録できます。</div></div>`;
  openEditPanel('イベントを編集',html,()=>{
-  const newTime=formatSliderTime(document.getElementById('editTimeSelect').value);const newPeriod=document.getElementById('editPeriod').value;const newType=EDIT_EVENT_TYPES[Number(document.getElementById('editTypeSelect').value)]?.type;const playerId=document.getElementById('editPlayerSelect').value;const detail=document.getElementById('editEventDetail').value;const gk=document.getElementById('editGoalkeeper').value;
+  const newTime=`${Number(document.getElementById('editMinuteSelect').value)}:${String(Number(document.getElementById('editSecondSelect').value)).padStart(2,'0')}`;const newPeriod=document.getElementById('editPeriod').value;const newType=EDIT_EVENT_TYPES[Number(document.getElementById('editTypeSelect').value)]?.type;const playerId=document.getElementById('editPlayerSelect').value;const detail=document.getElementById('editEventDetail').value;const gk=document.getElementById('editGoalkeeper').value;
   if(!newType){alert('イベント種別が選択されていません。');return;}
   e.time=newTime;e.period=newPeriod;e.type=newType;e.playerId=playerId;e.detail=newType==='turnover'?detail:'';e.goalkeeperId=isShotEvent(e)?gk:'';
   save();closeEditPanel();
