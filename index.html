@@ -288,10 +288,16 @@ details > summary::marker {
 .edit-card .edit-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
 .edit-card .slider-value{font-weight:700;margin:4px 0}
 @media(max-width:600px){.edit-panel{padding:6px}.edit-card{padding:12px;max-height:96vh}.edit-card .edit-field{margin:8px 0;padding:8px}}
+
+.shot-input-popup{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto}
+.shot-input-popup.hidden{display:none!important}
+.shot-input-popup-card{background:var(--panel,#fff);color:var(--text,#111);width:min(96vw,980px);max-height:95vh;overflow:auto;border-radius:12px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.shot-goal-image-wrap{width:100%;max-width:850px;margin:10px auto;cursor:crosshair}
+#shotGoalImage{display:block;width:100%;height:auto;border:2px solid #333;touch-action:manipulation}
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v18.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v18.2｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -548,19 +554,37 @@ details > summary::marker {
 <div class="status" style="margin-top:10px">シュート詳細登録：対象イベントを選択し、シュート位置・ゴールコースを登録できます。</div>
 <div class="row" style="margin:10px 0;align-items:center">
   <label for="shotDetailEventSelect">詳細を登録するシュート</label>
-  <select id="shotDetailEventSelect" style="min-width:220px;flex:1" onchange="selectShotDetailEvent(this.value)"><option value="">未登録シュートを選択</option></select>
-  <button type="button" class="secondary" onclick="enableShotCourtPick()">コート位置を登録</button>
+  <select id="shotDetailEventSelect" style="min-width:220px;flex:1" onchange="selectShotDetailEvent(this.value)"><option value="">シュートを選択</option></select>
+  <button type="button" class="secondary" onclick="openShotCourtPopup()">シュート位置入力</button>
+  <button type="button" class="secondary" onclick="openShotGoalPopup()">ゴールコース入力</button>
 </div>
 <div id="shotDetailStatus" class="note" aria-live="polite">イベントを選択してください。</div>
-<div id="shotDetailCourtWrap" class="shot-analysis-wrap" style="cursor:crosshair" onclick="shotAnalysisCourtClick(event)">
-  <img id="shotDetailCourt" alt="シュート位置入力用コート" style="display:block;width:100%;height:auto;border:2px solid #333" />
-  <div id="shotDetailCourtMarker" class="marker hidden"></div>
+<div id="shotCourtPopup" class="shot-input-popup hidden" role="dialog" aria-modal="true" aria-labelledby="shotCourtPopupTitle" onclick="if(event.target===this)closeShotInputPopups()">
+  <div class="shot-input-popup-card">
+    <div class="row" style="justify-content:space-between;align-items:center"><h3 id="shotCourtPopupTitle">シュート位置入力</h3><button type="button" class="secondary" onclick="closeShotInputPopups()">閉じる</button></div>
+    <p class="note">コートをタップしてシュート位置を登録します。</p>
+    <div id="shotDetailCourtWrap" class="shot-analysis-wrap" style="cursor:crosshair" onclick="shotAnalysisCourtClick(event)">
+      <img id="shotDetailCourt" alt="シュート位置入力用コート" style="display:block;width:100%;height:auto;border:2px solid #333" />
+      <div id="shotDetailCourtMarker" class="marker hidden"></div>
+    </div>
+  </div>
 </div>
-<div class="goal-zone-title">ゴールコースを登録</div>
-<div id="shotDetailGoalZoneGrid" class="goal-zone-grid">
-  <button class="goal-zone" type="button" onclick="setShotDetailGoalZone('left-top')">左上</button><button class="goal-zone" type="button" onclick="setShotDetailGoalZone('center-top')">中上</button><button class="goal-zone" type="button" onclick="setShotDetailGoalZone('right-top')">右上</button>
-  <button class="goal-zone" type="button" onclick="setShotDetailGoalZone('left-middle')">左中</button><button class="goal-zone" type="button" onclick="setShotDetailGoalZone('center-middle')">中央</button><button class="goal-zone" type="button" onclick="setShotDetailGoalZone('right-middle')">右中</button>
-  <button class="goal-zone" type="button" onclick="setShotDetailGoalZone('left-bottom')">左下</button><button class="goal-zone" type="button" onclick="setShotDetailGoalZone('center-bottom')">中下</button><button class="goal-zone" type="button" onclick="setShotDetailGoalZone('right-bottom')">右下</button>
+<div id="shotGoalPopup" class="shot-input-popup hidden" role="dialog" aria-modal="true" aria-labelledby="shotGoalPopupTitle" onclick="if(event.target===this)closeShotInputPopups()">
+  <div class="shot-input-popup-card">
+    <div class="row" style="justify-content:space-between;align-items:center"><h3 id="shotGoalPopupTitle">ゴールコース入力</h3><button type="button" class="secondary" onclick="closeShotInputPopups()">閉じる</button></div>
+    <p class="note">ゴール内の位置をタップして記録します。</p>
+    <div id="shotGoalImageWrap" class="shot-goal-image-wrap" onclick="shotGoalImageClick(event)">
+      <svg id="shotGoalImage" viewBox="0 0 1000 500" role="img" aria-label="ゴールコース入力画像">
+        <rect x="0" y="0" width="1000" height="500" fill="#e8e8e8"/>
+        <rect x="50" y="45" width="900" height="410" fill="#fff" stroke="#222" stroke-width="8"/>
+        <g stroke="#bbb" stroke-width="2"><line x1="100" y1="45" x2="100" y2="455"/><line x1="150" y1="45" x2="150" y2="455"/><line x1="200" y1="45" x2="200" y2="455"/><line x1="250" y1="45" x2="250" y2="455"/><line x1="300" y1="45" x2="300" y2="455"/><line x1="350" y1="45" x2="350" y2="455"/><line x1="400" y1="45" x2="400" y2="455"/><line x1="450" y1="45" x2="450" y2="455"/><line x1="500" y1="45" x2="500" y2="455"/><line x1="550" y1="45" x2="550" y2="455"/><line x1="600" y1="45" x2="600" y2="455"/><line x1="650" y1="45" x2="650" y2="455"/><line x1="700" y1="45" x2="700" y2="455"/><line x1="750" y1="45" x2="750" y2="455"/><line x1="800" y1="45" x2="800" y2="455"/><line x1="850" y1="45" x2="850" y2="455"/><line x1="900" y1="45" x2="900" y2="455"/><line x1="950" y1="45" x2="950" y2="455"/><line x1="50" y1="55" x2="950" y2="55"/><line x1="50" y1="80" x2="950" y2="80"/><line x1="50" y1="105" x2="950" y2="105"/><line x1="50" y1="130" x2="950" y2="130"/><line x1="50" y1="155" x2="950" y2="155"/><line x1="50" y1="180" x2="950" y2="180"/><line x1="50" y1="205" x2="950" y2="205"/><line x1="50" y1="230" x2="950" y2="230"/><line x1="50" y1="255" x2="950" y2="255"/><line x1="50" y1="280" x2="950" y2="280"/><line x1="50" y1="305" x2="950" y2="305"/><line x1="50" y1="330" x2="950" y2="330"/><line x1="50" y1="355" x2="950" y2="355"/><line x1="50" y1="380" x2="950" y2="380"/><line x1="50" y1="405" x2="950" y2="405"/><line x1="50" y1="430" x2="950" y2="430"/><line x1="50" y1="455" x2="950" y2="455"/></g>
+        <rect x="50" y="45" width="900" height="410" fill="none" stroke="#fff" stroke-width="22"/>
+        <g stroke-width="24"><line x1="50" y1="45" x2="50" y2="455" stroke="#d93636"/><line x1="950" y1="45" x2="950" y2="455" stroke="#fff"/><line x1="50" y1="45" x2="950" y2="45" stroke="#d93636"/><line x1="50" y1="455" x2="950" y2="455" stroke="#fff"/></g>
+        <circle id="shotGoalMarker" cx="500" cy="250" r="20" fill="#0077cc" stroke="#fff" stroke-width="6" visibility="hidden"/>
+      </svg>
+    </div>
+    <div id="shotGoalPopupStatus" class="note"></div>
+  </div>
 </div>
 
 <div id="shotAnalysisWrap" class="shot-analysis-wrap">
@@ -571,7 +595,7 @@ details > summary::marker {
 
 </div>
 
-<h3>シュート位置の3×3分布</h3>
+<h3>ゴールコース概況（位置入力からの簡易分類）</h3>
 
 <table class="shot-zone-table">
   <tbody id="shotZoneTable"></tbody>
@@ -1765,17 +1789,21 @@ function shotEventType(e){
  */
 
 let shotDetailSelectedEventId="";
+// v18.2: shot-course coordinates are the new source of truth; legacy zone-only data is intentionally discarded.
+if(!data.__shotCourseV182){data.events.forEach(e=>{if(isShotEvent(e)){delete e.goalZone;delete e.gx;delete e.gy;delete e.goalSide;}});data.__shotCourseV182=true;localStorage.setItem(KEY,JSON.stringify(data));}
 let shotDetailCourtPickActive=false;
 let playerEditMode=false;
 let eventEditMode=false;
 function togglePlayerEditMode(){playerEditMode=!playerEditMode;const b=document.getElementById("playerEditModeBtn");if(b){b.textContent=playerEditMode?"編集モードを終了":"編集モードを開始";b.className=playerEditMode?"good":"secondary";}renderPlayers();}
 function toggleEventEditMode(){eventEditMode=!eventEditMode;const b=document.getElementById("eventEditModeBtn");if(b){b.textContent=eventEditMode?"編集モードを終了":"編集モードを開始";b.className=eventEditMode?"good":"secondary";}renderEvents();}
 function refreshShotDetailEventSelect(){const sel=document.getElementById("shotDetailEventSelect");if(!sel)return;const current=shotDetailSelectedEventId;const shots=data.events.filter(isShotEvent);sel.innerHTML='<option value="">未登録シュートを選択</option>'+shots.map(e=>`<option value="${esc(e.id)}">${esc(e.period||"")} ${esc(e.time||"")} / ${esc(teamName(e.side))} / ${esc(eventPlayerName(e))} / ${esc(eventName(e))}</option>`).join("");if(shots.some(e=>e.id===current))sel.value=current;else{shotDetailSelectedEventId="";sel.value="";}updateShotDetailStatus();}
-function selectShotDetailEvent(id){shotDetailSelectedEventId=id||"";shotDetailCourtPickActive=false;const m=document.getElementById("shotDetailCourtMarker");if(m)m.classList.add("hidden");const ev=data.events.find(e=>e.id===id);if(ev&&ev.x!=null&&ev.y!=null&&m){m.style.left=ev.x+"%";m.style.top=ev.y+"%";m.classList.remove("hidden");}document.querySelectorAll("#shotDetailGoalZoneGrid .goal-zone").forEach(b=>b.classList.remove("active"));if(ev&&ev.goalZone){const idx=["left-top","center-top","right-top","left-middle","center-middle","right-middle","left-bottom","center-bottom","right-bottom"].indexOf(ev.goalZone);const buttons=document.querySelectorAll("#shotDetailGoalZoneGrid .goal-zone");if(idx>=0&&buttons[idx])buttons[idx].classList.add("active");}updateShotDetailStatus();}
+function selectShotDetailEvent(id){shotDetailSelectedEventId=id||"";shotDetailCourtPickActive=false;const m=document.getElementById("shotDetailCourtMarker");if(m)m.classList.add("hidden");const ev=data.events.find(e=>e.id===id);if(ev&&ev.x!=null&&ev.y!=null&&m){m.style.left=ev.x+"%";m.style.top=ev.y+"%";m.classList.remove("hidden");}document.querySelectorAll("#shotDetailGoalZoneGrid .goal-zone").forEach(b=>b.classList.remove("active"));if(ev&&ev.goalZone){const idx=["left-top","center-top","right-top","left-middle","center-middle","right-middle","left-bottom","center-bottom","right-bottom"].indexOf(ev.goalZone);const buttons=document.querySelectorAll("#shotDetailGoalZoneGrid .goal-zone");if(idx>=0&&buttons[idx])buttons[idx].classList.add("active");}const gm=document.getElementById("shotGoalMarker");if(gm&&ev&&ev.gx!=null&&ev.gy!=null){gm.setAttribute("cx",ev.gx*10);gm.setAttribute("cy",ev.gy*5);gm.setAttribute("visibility","visible");}else if(gm)gm.setAttribute("visibility","hidden");updateShotDetailStatus();}
 function updateShotDetailStatus(){const el=document.getElementById("shotDetailStatus");if(!el)return;const ev=data.events.find(e=>e.id===shotDetailSelectedEventId);if(!ev){el.textContent="イベントを選択してください。";return;}const pos=ev.x!=null&&ev.y!=null?"シュート位置登録済":"シュート位置未登録";const zone=ev.goalZone?`ゴールコース：${goalZoneLabels[ev.goalZone]||ev.goalZone}`:"ゴールコース未登録";el.textContent=`選択中：${teamName(ev.side)} / ${eventPlayerName(ev)} / ${eventName(ev)}　｜　${pos}　｜　${zone}`;}
-function enableShotCourtPick(){if(!shotDetailSelectedEventId){alert("先にシュートイベントを選択してください。");return;}shotDetailCourtPickActive=true;const el=document.getElementById("shotDetailStatus");if(el)el.textContent="コートをクリックしてシュート位置を登録してください。";}
-function shotAnalysisCourtClick(e){if(!shotDetailCourtPickActive||!shotDetailSelectedEventId)return;const img=document.getElementById("shotDetailCourt");const rect=img.getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width*100;const y=(e.clientY-rect.top)/rect.height*100;const ev=data.events.find(v=>v.id===shotDetailSelectedEventId);if(!ev)return;ev.x=+x.toFixed(2);ev.y=+y.toFixed(2);const marker=document.getElementById("shotDetailCourtMarker");marker.style.left=x+"%";marker.style.top=y+"%";marker.classList.remove("hidden");shotDetailCourtPickActive=false;save();refreshShotDetailEventSelect();selectShotDetailEvent(ev.id);}
-function setShotDetailGoalZone(zone){const ev=data.events.find(e=>e.id===shotDetailSelectedEventId);if(!ev){alert("先にシュートイベントを選択してください。");return;}ev.goalZone=zone;const coords={"left-top":[16.67,16.67],"center-top":[50,16.67],"right-top":[83.33,16.67],"left-middle":[16.67,50],"center-middle":[50,50],"right-middle":[83.33,50],"left-bottom":[16.67,83.33],"center-bottom":[50,83.33],"right-bottom":[83.33,83.33]};const c=coords[zone];if(c){ev.gx=c[0];ev.gy=c[1];}ev.goalSide=ev.side==="home"?"left":"right";save();refreshShotDetailEventSelect();selectShotDetailEvent(ev.id);}
+function openShotCourtPopup(){if(!shotDetailSelectedEventId){alert("先にシュートイベントを選択してください。");return;}closeShotInputPopups();document.getElementById("shotCourtPopup").classList.remove("hidden");shotDetailCourtPickActive=true;}
+function openShotGoalPopup(){if(!shotDetailSelectedEventId){alert("先にシュートイベントを選択してください。");return;}closeShotInputPopups();document.getElementById("shotGoalPopup").classList.remove("hidden");const ev=data.events.find(e=>e.id===shotDetailSelectedEventId);const m=document.getElementById("shotGoalMarker");if(ev&&ev.gx!=null&&ev.gy!=null){m.setAttribute("cx",ev.gx*10);m.setAttribute("cy",ev.gy*5);m.setAttribute("visibility","visible");}else m.setAttribute("visibility","hidden");document.getElementById("shotGoalPopupStatus").textContent="ゴール内をクリックして位置を登録してください。";}
+function closeShotInputPopups(){document.getElementById("shotCourtPopup")?.classList.add("hidden");document.getElementById("shotGoalPopup")?.classList.add("hidden");shotDetailCourtPickActive=false;}
+function shotAnalysisCourtClick(e){if(!shotDetailCourtPickActive||!shotDetailSelectedEventId)return;const img=document.getElementById("shotDetailCourt");const rect=img.getBoundingClientRect();const x=Math.max(0,Math.min(100,(e.clientX-rect.left)/rect.width*100));const y=Math.max(0,Math.min(100,(e.clientY-rect.top)/rect.height*100));const ev=data.events.find(v=>v.id===shotDetailSelectedEventId);if(!ev)return;ev.x=+x.toFixed(2);ev.y=+y.toFixed(2);const marker=document.getElementById("shotDetailCourtMarker");marker.style.left=x+"%";marker.style.top=y+"%";marker.classList.remove("hidden");save();closeShotInputPopups();refreshShotDetailEventSelect();selectShotDetailEvent(ev.id);}
+function shotGoalImageClick(e){const svg=document.getElementById("shotGoalImage");const rect=svg.getBoundingClientRect();const gx=Math.max(0,Math.min(100,(e.clientX-rect.left)/rect.width*100));const gy=Math.max(0,Math.min(100,(e.clientY-rect.top)/rect.height*100));const ev=data.events.find(v=>v.id===shotDetailSelectedEventId);if(!ev)return;ev.gx=+gx.toFixed(2);ev.gy=+gy.toFixed(2);ev.goalSide=ev.side==="home"?"left":"right";const zoneX=gx<33.33?"left":gx<66.67?"center":"right";const zoneY=gy<33.33?"top":gy<66.67?"middle":"bottom";ev.goalZone=zoneX+"-"+zoneY;const marker=document.getElementById("shotGoalMarker");marker.setAttribute("cx",gx*10);marker.setAttribute("cy",gy*5);marker.setAttribute("visibility","visible");save();document.getElementById("shotGoalPopupStatus").textContent=`登録位置：${gx.toFixed(1)}% / ${gy.toFixed(1)}%`;refreshShotDetailEventSelect();selectShotDetailEvent(ev.id);}
 
 function renderShotAnalysis(){
 
