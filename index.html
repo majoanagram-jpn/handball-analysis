@@ -294,6 +294,20 @@ details > summary::marker {
 .shot-input-popup-card{background:var(--panel,#fff);color:var(--text,#111);width:min(96vw,980px);max-height:95vh;overflow:auto;border-radius:12px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
 .shot-goal-image-wrap{width:100%;max-width:850px;margin:10px auto;cursor:crosshair}
 #shotGoalImage{display:block;width:100%;height:auto;border:2px solid #333;touch-action:manipulation}
+
+.goal-course-display{display:flex;align-items:stretch;gap:18px;margin:12px 0;}
+.goal-course-overview,.goal-course-map-panel{flex:1;min-width:0;}
+.goal-course-overview h4,.goal-course-map-panel h4{margin:8px 0;text-align:center;}
+.goal-course-overview .shot-zone-table{width:100%;aspect-ratio:1/1;table-layout:fixed;}
+.goal-course-overview .shot-zone-table tbody{height:100%;}
+.goal-course-overview .shot-zone-table tr{height:33.333%;}
+.goal-course-overview .shot-zone-table td{width:33.333%;height:33.333%;}
+.goal-course-map-wrap{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;}
+#shotGoalDistributionImage{display:block;width:100%;height:100%;object-fit:contain;}
+#shotGoalDistributionMarkers{position:absolute;inset:0;pointer-events:none;}
+.goal-course-point{position:absolute;width:13px;height:13px;border:2px solid #fff;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #222;opacity:.85;}
+@media(max-width:700px){.goal-course-display{flex-direction:column;gap:12px}.goal-course-overview,.goal-course-map-panel{width:100%;}.goal-course-map-wrap{max-width:430px;margin:auto;}}
+
 </style>
 </head>
 <body>
@@ -592,11 +606,20 @@ details > summary::marker {
 
 </div>
 
-<h3>ゴールコース概況（位置入力からの簡易分類）</h3>
-
-<table class="shot-zone-table">
-  <tbody id="shotZoneTable"></tbody>
-</table>
+<h3>ゴールコース分析</h3>
+<div class="goal-course-display">
+  <div class="goal-course-overview">
+    <h4>ゴールコース概況</h4>
+    <table class="shot-zone-table"><tbody id="shotZoneTable"></tbody></table>
+  </div>
+  <div class="goal-course-map-panel">
+    <h4>ゴールコース分布</h4>
+    <div id="shotGoalDistributionWrap" class="goal-course-map-wrap">
+      <img id="shotGoalDistributionImage" alt="ゴールコース分布用ゴール画像" />
+      <div id="shotGoalDistributionMarkers"></div>
+    </div>
+  </div>
+</div>
 
 </details>
 <details>
@@ -876,6 +899,7 @@ function getGoalRelation(e){
 }
 document.getElementById("courtImg").src=COURT_IMAGE;
 document.getElementById("shotAnalysisCourt").src=COURT_IMAGE;
+const goalDistImg=document.getElementById("shotGoalDistributionImage");if(goalDistImg)goalDistImg.src=document.getElementById("shotGoalImageGraphic")?.src||"";
 if(document.getElementById("shotDetailCourt"))document.getElementById("shotDetailCourt").src=COURT_IMAGE;
 function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll();
 }
@@ -1816,6 +1840,8 @@ function renderShotAnalysis(){
 
   const zoneTable=
     document.getElementById("shotZoneTable");
+  const goalDistributionMarkers=document.getElementById("shotGoalDistributionMarkers");
+  if(goalDistributionMarkers)goalDistributionMarkers.innerHTML="";
 
   if(
     !court ||
@@ -1899,6 +1925,19 @@ function renderShotAnalysis(){
     shots=shots.filter(
       e=>shotEventType(e)===resultFilter
     );
+  }
+
+
+  // ゴール画像上にgx/gyの登録点を重ねて表示（概況と同じフィルター対象）
+  if(goalDistributionMarkers){
+    shots.filter(e=>e.gx!=null&&e.gy!=null&&e.gx!==""&&e.gy!=="").forEach(e=>{
+      const point=document.createElement("div");point.className="goal-course-point";
+      point.style.left=e.gx+"%";point.style.top=e.gy+"%";
+      point.style.background=e.side==="home"?"#1769aa":"#e11d48";
+      const player=data.players.find(p=>p.id===e.playerId);
+      point.title=`${e.side==="home"?(data.match?.team||"自チーム"):(data.match?.opponent||"相手チーム")} / ${player?`#${player.no||""} ${player.name}`:`#${e.playerNo||"?"}`} / ${eventName(e)}`;
+      goalDistributionMarkers.appendChild(point);
+    });
   }
 
 
