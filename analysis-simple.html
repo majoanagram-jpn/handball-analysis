@@ -328,7 +328,7 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
   <div class="timer-wrap">
     <div class="timer-top">
       <div>
-        <div class="timer-title">MATCH TIMER</div>
+        <div class="timer-title">MATCH TIMER｜v3.6</div>
         <div id="timerDisplay">00:00</div>
       </div>
       <div class="timer-controls">
@@ -1460,10 +1460,32 @@ if (type === "shot_goal") {
 // ターンオーバー記録
 // ------------------------------
 
+// ------------------------------
+// ターンオーバー内部分類
+// ------------------------------
+// 同一チームのイベントを遡り、最初に見つかった「シュート失敗」または
+// 「ターンオーバー」を基準に内部識別子を返す。
+// SHOT_END_NOT_TO = シュートまで到達した攻撃権切り替え（not TO）
+// TO             = シュートに至らない攻撃権喪失（TO）
+function classifyTurnoverEvent(targetEvent) {
+  const idx = data.events.indexOf(targetEvent);
+  if (idx < 0) return "TO";
+  for (let i = idx - 1; i >= 0; i--) {
+    const e = data.events[i];
+    if (e.side !== targetEvent.side) continue;
+    if (e.type !== "shot_miss" && e.type !== "turnover") continue;
+    return e.type === "shot_miss" ? "SHOT_END_NOT_TO" : "TO";
+  }
+  return "TO";
+}
+
+
 function recordTurnover() {
   const event = createEvent("turnover", null);
 
   data.events.push(event);
+  // 入力時点の内部識別子をイベントに保持（画面表示には使用しない）。
+  event.internalTurnoverId = classifyTurnoverEvent(event);
 
   if (!saveData()) {
     data.events.pop();
