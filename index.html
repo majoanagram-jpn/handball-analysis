@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<title>ハンドボール試合分析ツール v17.9</title>
+<title>ハンドボール試合分析ツール v18.9.2</title>
 <meta property="og:site_name" content="試合分析ツールforハンドボール">
 <meta property="og:title" content="試合分析ツールforハンドボール">
 <meta property="og:description" content="ハンドボールの記録・分析ツール">
@@ -651,8 +651,8 @@ details > summary::marker {
 
 <section>
 <h2>8. 選手別集計</h2>
-<div class="row" style="margin-bottom:10px"><div class="field"><label>表示期間</label><select id="statsPeriodFilter" onchange="renderStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>ターンオーバーの詳細による追加のフィルタリング</label><select id="statsTurnoverDetailFilter" onchange="renderStats()" style="width:auto"><option value="all">すべて</option><option value="パスミス">パスミス</option><option value="キャッチミス">キャッチミス</option><option value="オーバーステップ">オーバーステップ</option><option value="オーバータイム">オーバータイム</option><option value="イリーガルドリブル">イリーガルドリブル</option><option value="ラインクロス">ラインクロス</option><option value="チャージング">チャージング</option><option value="プッシング">プッシング</option><option value="ホールディング">ホールディング</option><option value="pass_cut">パスカット</option></select></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">枠外</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
-<div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>枠外</th><th>ターンオーバー</th><th>パスカット</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
+<div class="row" style="margin-bottom:10px"><div class="field"><label>表示期間</label><select id="statsPeriodFilter" onchange="renderStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>ターンオーバーの詳細による追加のフィルタリング</label><select id="statsTurnoverDetailFilter" onchange="renderStats()" style="width:auto"><option value="all">すべて</option><option value="パスミス">パスミス</option><option value="キャッチミス">キャッチミス</option><option value="オーバーステップ">オーバーステップ</option><option value="オーバータイム">オーバータイム</option><option value="イリーガルドリブル">イリーガルドリブル</option><option value="ラインクロス">ラインクロス</option><option value="チャージング">チャージング</option><option value="プッシング">プッシング</option><option value="ホールディング">ホールディング</option><option value="pass_cut">パスカット</option></select></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">シュート失敗</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
+<div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>シュート失敗</th><th>ターンオーバー</th><th>パスカット</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
 </section>
 <section>
 <h2>9. GK別集計</h2>
@@ -667,7 +667,7 @@ details > summary::marker {
 <th>被シュート</th>
 <th>セーブ</th>
 <th>失点</th>
-<th>枠外</th>
+<th>シュート失敗</th>
 <th>セーブ率</th>
 </tr>
 </thead>
@@ -806,7 +806,7 @@ const labels={
   goal:"得点",
   shot_goal:"得点",
   shot_save:"GKセーブ",
-  shot_out:"枠外",
+  shot_out:"シュート失敗",
   shot_miss:"シュート失敗（簡易版）",
   shot_block:"ブロック",
   miss:"ターンオーバー",
@@ -2387,7 +2387,7 @@ function calc(p, periodOverride){
   shots,
   rate:shots?(goals/shots*100).toFixed(1)+"%":"-",
   save:ev.filter(e=>e.type==="shot_save"||e.type==="shot_miss"||isOutOfFrameEvent(e)).length,
-  missshot:0,
+  missshot:ev.filter(e=>isOutOfFrameEvent(e)).length,
   turn:turnoverFilter==="pass_cut"?0:classifiedTurnovers.length,
   passcut:turnoverFilter==="all"||turnoverFilter==="pass_cut"?passCuts:0,
   seven:ev.filter(e=>e.type==="7m").length
@@ -2426,9 +2426,9 @@ function renderTeamKPI(){
   const turnoverRate=pct(turnovers,possessionCount);
   const toPer50=possessionCount?(turnovers/possessionCount*50).toFixed(1):"-";
   // GK KPI: goal + out-of-frame events; out-of-frame is counted as a save in this simplified KPI.
-  const gkEvents=events.filter(e=>e.side===side.key&&e.goalkeeperId&&(e.type==="shot_goal"||e.type==="goal"||e.type==="shot_miss"));
-  const gkFaced=gkEvents.filter(e=>e.type==="shot_goal"||e.type==="goal"||e.type==="shot_miss").length;
-  const gkSaves=gkEvents.filter(e=>e.type==="shot_miss").length;
+  const gkEvents=events.filter(e=>e.side===side.key&&e.goalkeeperId&&(e.type==="shot_goal"||e.type==="goal"||e.type==="shot_miss"||isOutOfFrameEvent(e)));
+  const gkFaced=gkEvents.filter(e=>e.type==="shot_goal"||e.type==="goal"||e.type==="shot_miss"||isOutOfFrameEvent(e)).length;
+  const gkSaves=gkEvents.filter(e=>e.type==="shot_miss"||isOutOfFrameEvent(e)).length;
   tbody.innerHTML=`<tr><th>シュート総数</th><th>チームシュート成功率</th><th>ポゼッション数</th><th>ターンオーバー数</th></tr><tr><td>${shotTotal}</td><td>${teamShotRate}</td><td>${possessionCount}</td><td>${turnovers}</td></tr><tr><th>ターンオーバー率</th><th>TO%（回/50）</th><th>GK被シュート数</th><th>GKセーブ数</th></tr><tr><td>${turnoverRate}</td><td>${toPer50}</td><td>${gkFaced}</td><td>${gkSaves}</td></tr><tr><th>GKセーブ率</th><td>${pct(gkSaves,gkFaced)}</td><td colspan="2"></td></tr>`;
  });
 }
