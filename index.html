@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<title>ハンドボール試合分析ツール v17.11</title>
+<title>ハンドボール試合分析ツール v17.12.1</title>
 <meta property="og:site_name" content="試合分析ツールforハンドボール">
 <meta property="og:title" content="試合分析ツールforハンドボール">
 <meta property="og:description" content="ハンドボールの記録・分析ツール">
@@ -306,17 +306,15 @@ details > summary::marker {
 </style>
 
 <style>
-.section-fold-toggle{margin-left:10px;padding:3px 9px;min-height:28px;font-size:12px;vertical-align:middle}
-.section-fold-content.is-folded{display:none!important}
 #jsonLoadMenu{margin-top:4px}
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v17.12｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v17.12.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
-<section>
-<h2>1. 試合登録</h2>
+<details open>
+<summary>1. 試合登録</summary>
 <div class="row">
   <div class="field wide"><label>自チーム</label><input id="team" placeholder="例：○○高校"></div>
   <div class="field wide"><label>相手チーム</label><input id="opponent" placeholder="例：△△高校"></div>
@@ -328,7 +326,8 @@ details > summary::marker {
 </button>
 </div>
 <div id="matchStatus" class="note"></div>
-</section>
+
+</details>
 
 <details>
 <summary>2. 選手登録</summary>
@@ -362,8 +361,8 @@ details > summary::marker {
 </div>
 </details>
 
-<section>
-<h2>3. 試合記録</h2>
+<details open>
+<summary>3. 試合記録</summary>
 <div class="modebar">
   <label>記録対象</label>
   <select id="side" onchange="refreshPlayerSelect();refreshGoalkeeperSelect();refreshOpponentPlayerSelect()">
@@ -455,7 +454,8 @@ details > summary::marker {
   <span class="note">選択した詳細は、ターンオーバーの記録に付属して保存されます。</span>
 </div>
 <div id="eventStatus" class="status" style="margin-top:10px">シュートを記録した後、下のコートをクリックしてシュート位置を登録できます。</div>
-</section>
+
+</details>
 
 <details>
 <summary>6. シュート分析</summary>
@@ -564,13 +564,14 @@ details > summary::marker {
 <th>操作</th></tr></thead><tbody id="events"></tbody></table></div>
 </details>
 
-<section>
-<h2>8. 選手別集計</h2>
+<details open>
+<summary>8. 選手別集計</summary>
 <div class="row" style="margin-bottom:10px"><div class="field"><label>表示期間</label><select id="statsPeriodFilter" onchange="renderStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>ターンオーバーの詳細による追加のフィルタリング</label><select id="statsTurnoverDetailFilter" onchange="renderStats()" style="width:auto"><option value="all">すべて</option><option value="パスミス">パスミス</option><option value="キャッチミス">キャッチミス</option><option value="オーバーステップ">オーバーステップ</option><option value="オーバータイム">オーバータイム</option><option value="イリーガルドリブル">イリーガルドリブル</option><option value="ラインクロス">ラインクロス</option><option value="チャージング">チャージング</option><option value="プッシング">プッシング</option><option value="ホールディング">ホールディング</option><option value="pass_cut">パスカット</option></select></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">枠外</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
 <div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>枠外</th><th>ターンオーバー</th><th>パスカット</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
-</section>
-<section>
-<h2>9. GK別集計</h2>
+
+</details>
+<details open>
+<summary>9. GK別集計</summary>
 <div class="row" style="align-items:center;margin-bottom:10px;gap:10px"><label for="goalkeeperStatsPeriodFilter">表示期間</label><select id="goalkeeperStatsPeriodFilter" onchange="renderGoalkeeperStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div>
 <div class="scroll">
 <table>
@@ -590,9 +591,10 @@ details > summary::marker {
 <tbody id="goalkeeperStats"></tbody>
 </table>
 </div>
-</section>
-<section>
-<h2>10. チームKPI</h2>
+
+</details>
+<details open>
+<summary>10. チームKPI</summary>
 <p class="note">シュート成功率は「全体」ではGK・位置未登録を含み、位置を選択した場合は該当位置のみを集計します。位置を「全体」以外にした場合、ターンオーバー指標はターンオーバー数のみで計算します。各小セクションの表示期間は個別に変更できます。</p>
 <div class="team-kpi-subsection" style="border:1px solid var(--border-color,#ccc);border-radius:8px;padding:12px;margin:12px 0">
   <h3 style="margin-top:0">自チーム</h3>
@@ -606,9 +608,10 @@ details > summary::marker {
   <div class="row" style="align-items:center;margin-bottom:8px;gap:10px"><label for="teamKpiOpponentPositionFilter">集計対象ポジション</label><select id="teamKpiOpponentPositionFilter" onchange="renderTeamKPI()" style="width:auto"><option value="all">全体</option></select></div>
   <div class="scroll"><table><tbody id="teamKpiOpponentStats"></tbody></table></div>
 </div>
-</section>
-<section>
-<h2>11. Excel向け出力</h2>
+
+</details>
+<details open>
+<summary>11. Excel向け出力</summary>
 <div class="row">
   <button onclick="copyTSV('all')">全データをコピー</button>
   <button onclick="copyTSV('events')">イベント一覧をコピー</button>
@@ -617,10 +620,11 @@ details > summary::marker {
   <button class="danger" onclick="clearAll()">全データ削除</button>
 </div>
 <pre id="copyOut" class="out"></pre>
-</section>
 
-<section>
-  <h2>12. 過去の試合</h2>
+</details>
+
+<details open>
+<summary>12. 過去の試合</summary>
 
   <div class="row" style="align-items:flex-start;flex-direction:column;gap:8px">
   <button onclick="renderMatchHistory()">試合履歴を更新</button>
@@ -674,7 +678,8 @@ details > summary::marker {
       <tbody id="matchHistory"></tbody>
     </table>
   </div>
-</section>
+
+</details>
 
 </main>
 
@@ -2424,7 +2429,7 @@ document.addEventListener("DOMContentLoaded",renderMatchTimer);
 
 
 <script>
-// v17.12: section folding and JSON load submenu
+// v17.12.1: JSON読み込みメニュー開閉
 function toggleJsonLoadMenu(){
  const menu=document.getElementById('jsonLoadMenu');
  const btn=document.getElementById('jsonLoadMenuToggle');
@@ -2433,25 +2438,6 @@ function toggleJsonLoadMenu(){
  menu.classList.toggle('hidden',!opening);
  btn.textContent=opening?'JSON読み込み ▴':'JSON読み込み ▾';
 }
-function initializeSectionFolding(){
- document.querySelectorAll('main section').forEach(section=>{
-  const heading=section.querySelector(':scope > h2');
-  if(!heading||heading.querySelector('.section-fold-toggle'))return;
-  const btn=document.createElement('button');
-  btn.type='button'; btn.className='secondary section-fold-toggle'; btn.textContent='折り畳む';
-  btn.setAttribute('aria-expanded','true');
-  heading.appendChild(btn);
-  const content=Array.from(section.children).filter(el=>el!==heading);
-  btn.addEventListener('click',()=>{
-   const folded=btn.getAttribute('aria-expanded')==='true';
-   btn.setAttribute('aria-expanded',String(!folded));
-   btn.textContent=folded?'展開する':'折り畳む';
-   content.forEach(el=>el.classList.toggle('is-folded',folded));
-  });
- });
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializeSectionFolding);
-else initializeSectionFolding();
 </script>
 </body>
 </html>
