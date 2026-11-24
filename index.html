@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<title>ハンドボール試合分析ツール v18.9.2</title>
+<title>ハンドボール試合分析ツール v17.9</title>
 <meta property="og:site_name" content="試合分析ツールforハンドボール">
 <meta property="og:title" content="試合分析ツールforハンドボール">
 <meta property="og:description" content="ハンドボールの記録・分析ツール">
@@ -311,7 +311,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v18.9.2｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v18.9.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -651,8 +651,8 @@ details > summary::marker {
 
 <section>
 <h2>8. 選手別集計</h2>
-<div class="row" style="margin-bottom:10px"><div class="field"><label>表示期間</label><select id="statsPeriodFilter" onchange="renderStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>ターンオーバーの詳細による追加のフィルタリング</label><select id="statsTurnoverDetailFilter" onchange="renderStats()" style="width:auto"><option value="all">すべて</option><option value="パスミス">パスミス</option><option value="キャッチミス">キャッチミス</option><option value="オーバーステップ">オーバーステップ</option><option value="オーバータイム">オーバータイム</option><option value="イリーガルドリブル">イリーガルドリブル</option><option value="ラインクロス">ラインクロス</option><option value="チャージング">チャージング</option><option value="プッシング">プッシング</option><option value="ホールディング">ホールディング</option><option value="pass_cut">パスカット</option></select></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="missshot">シュート失敗</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
-<div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>シュート失敗</th><th>ターンオーバー</th><th>パスカット</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
+<div class="row" style="margin-bottom:10px"><div class="field"><label>表示期間</label><select id="statsPeriodFilter" onchange="renderStats()" style="width:auto"><option value="all">全体</option><option value="前半">前半</option><option value="後半">後半</option></select></div><div class="field"><label>表示チーム</label><div class="row"><label><input type="checkbox" id="statsShowOwn" checked onchange="renderStats()"> 自チーム</label><label><input type="checkbox" id="statsShowOpponent" checked onchange="renderStats()"> 相手チーム</label></div></div><div class="field"><label>ターンオーバーの詳細による追加のフィルタリング</label><select id="statsTurnoverDetailFilter" onchange="renderStats()" style="width:auto"><option value="all">すべて</option><option value="パスミス">パスミス</option><option value="キャッチミス">キャッチミス</option><option value="オーバーステップ">オーバーステップ</option><option value="オーバータイム">オーバータイム</option><option value="イリーガルドリブル">イリーガルドリブル</option><option value="ラインクロス">ラインクロス</option><option value="チャージング">チャージング</option><option value="プッシング">プッシング</option><option value="ホールディング">ホールディング</option><option value="pass_cut">パスカット</option></select></div><div class="field"><label>並び替え項目</label><select id="statsSortKey" onchange="renderStats()"><option value="no">背番号</option><option value="team">チーム</option><option value="name">氏名</option><option value="pos">位置</option><option value="goals">得点</option><option value="shots">シュート</option><option value="rate">成功率</option><option value="save">セーブ</option><option value="shot_out">枠外</option><option value="turn">ターンオーバー</option><option value="seven">7m</option></select></div><button id="statsSortDirection" class="secondary" onclick="toggleStatsSortDirection()">昇順 ↑</button><span class="note">※背番号0の選手は表示しません。</span></div>
+<div class="scroll"><table><thead><tr><th>チーム</th><th>番号</th><th>氏名</th><th>位置</th><th>得点</th><th>シュート</th><th>成功率</th><th>セーブ</th><th>枠外</th><th>ターンオーバー</th><th>パスカット</th><th>7m</th></tr></thead><tbody id="stats"></tbody></table></div>
 </section>
 <section>
 <h2>9. GK別集計</h2>
@@ -667,7 +667,7 @@ details > summary::marker {
 <th>被シュート</th>
 <th>セーブ</th>
 <th>失点</th>
-<th>シュート失敗</th>
+<th>枠外</th>
 <th>セーブ率</th>
 </tr>
 </thead>
@@ -2371,15 +2371,17 @@ function calc(p, periodOverride){
  const classifiedTurnovers=filteredTurnovers.filter(isClassifiedTurnover);
  const passCuts=ev.filter(e=>e.type==="pass_cut").length;
 
- const shots=ev.filter(e=>
+ const goals=ev.filter(e=>
+   e.type==="shot_goal"
+ ).length;
+ const simpleShotFailures=ev.filter(e=>e.type==="shot_miss").length;
+ // 簡易版のシュート失敗がある場合は「成功＋簡易版失敗」で総シュート数を算出。
+ // 簡易版記録がなければ従来の詳細イベント集計を維持する。
+ const shots=simpleShotFailures>0 ? goals+simpleShotFailures : ev.filter(e=>
    e.type==="shot_goal" ||
    e.type==="shot_save" ||
    e.type==="shot_out" ||
    e.type==="shot_block"
- ).length;
-
- const goals=ev.filter(e=>
-   e.type==="shot_goal"
  ).length;
 
  return {
@@ -2419,7 +2421,10 @@ function renderTeamKPI(){
   const teamEvents=events.filter(e=>e.side===side.key);
   const detailedShots=teamEvents.filter(e=>shotTypes.includes(e.type));
   const goals=teamEvents.filter(e=>e.type==="shot_goal"||e.type==="goal").length;
-  const shotTotal=detailedShots.length;
+  const simpleShotFailures=teamEvents.filter(e=>e.type==="shot_miss").length;
+  // 簡易版のシュート失敗がある場合は「成功＋簡易版失敗」で総シュート数を算出。
+  // 簡易版記録がなければ従来の詳細イベント集計を維持する。
+  const shotTotal=simpleShotFailures>0 ? goals+simpleShotFailures : detailedShots.length;
   const teamShotRate=pct(goals,shotTotal);
   const turnovers=teamEvents.filter(isClassifiedTurnover).length;
   const possessionCount=turnovers+goals;
@@ -2781,4 +2786,3 @@ document.addEventListener("DOMContentLoaded",renderMatchTimer);
 
 </body>
 </html>
-
