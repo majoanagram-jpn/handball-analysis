@@ -328,7 +328,7 @@ main{max-width:900px;margin:14px auto;padding:0 12px}
   <div class="timer-wrap">
     <div class="timer-top">
       <div>
-        <div class="timer-title">MATCH TIMER｜v3.6</div>
+        <div class="timer-title">MATCH TIMER｜v3.7</div>
         <div id="timerDisplay">00:00</div>
       </div>
       <div class="timer-controls">
@@ -1461,12 +1461,13 @@ if (type === "shot_goal") {
 // ------------------------------
 
 // ------------------------------
-// ターンオーバー内部分類
+// ターンオーバー内部分類（v3.7）
 // ------------------------------
-// 同一チームのイベントを遡り、最初に見つかった「シュート失敗」または
-// 「ターンオーバー」を基準に内部識別子を返す。
-// SHOT_END_NOT_TO = シュートまで到達した攻撃権切り替え（not TO）
-// TO             = シュートに至らない攻撃権喪失（TO）
+// ポゼッションはシュート成功・失敗・シュートを伴わないTOで終了する。
+// シュート失敗後に続くTOはポゼッションを重複終了させず、TO数にも含めない。
+// 同一チームのイベントを遡り、直近のシュート失敗またはTOで分類する。
+// SHOT_END_NOT_TO = シュート失敗後のTO（TO数対象外）
+// TO             = シュートに至らない攻撃権喪失（TO数対象）
 function classifyTurnoverEvent(targetEvent) {
   const idx = data.events.indexOf(targetEvent);
   if (idx < 0) return "TO";
