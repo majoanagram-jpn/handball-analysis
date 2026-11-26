@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ja">
 <head>
-<title>ハンドボール試合分析ツール v18.10.3</title>
+<title>ハンドボール試合分析ツール v18.10.1</title>
 <meta property="og:site_name" content="試合分析ツールforハンドボール">
 <meta property="og:title" content="試合分析ツールforハンドボール">
 <meta property="og:description" content="ハンドボールの記録・分析ツール">
@@ -311,7 +311,7 @@ details > summary::marker {
 </style>
 </head>
 <body>
-<header><h1>ハンドボール試合分析</h1><div class="version">v18.10.3｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
+<header><h1>ハンドボール試合分析</h1><div class="version">v18.10.1｜PC・スマートフォン自動対応</div><nav style="display:flex;flex-wrap:wrap;gap:8px;margin-top:9px"><a href="analysis-simple.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#dbeafe;color:#123b60;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #93c5fd">簡易版に切り替え</a><a href="guide.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">使い方ガイド</a><a href="history.html" style="display:inline-block;padding:7px 10px;border-radius:6px;background:#fff;color:#17202a;text-decoration:none;font-size:13px;font-weight:600">更新履歴・機能追加一覧</a></nav></header>
 <main>
 
 <section>
@@ -2337,7 +2337,7 @@ function renderScore(){
  document.getElementById("score").textContent=`${h} - ${a}`;
 }
 // v18.10.2: TO識別子を優先認識。未付与の記録は同チーム・同期間のイベント履歴を遡って判定。
-// 直前の攻撃がシュート（GKセーブ／枠外を含む）で終了している場合、続くTOは「TOー」としてTO数から除外。
+// 直前の攻撃がシュート失敗系イベント（GKセーブ／枠外／ブロック／簡易版シュート失敗）で終了している場合、続くTOは「TOー」としてTO+数から除外。
 // TO+（シュート終了イベントを伴わないTO）= TO集計対象 / TOー（シュート終了後のTO）= TO集計対象外。
 function classifyTurnoverEvent(targetEvent){
  if(!targetEvent||targetEvent.type!=="turnover")return "TO";
@@ -2346,13 +2346,13 @@ function classifyTurnoverEvent(targetEvent){
  if(identifier==="-"||identifier==="TO-"||identifier==="TOー"||identifier==="TO−"||identifier==="TO－")return "SHOT_END_NOT_TO";
  const idx=data.events.indexOf(targetEvent);
  if(idx<0)return "TO";
- const shotEndTypes=["shot_out","shot_miss","shot_save","shot_block"];
+ const shotEndTypes=["shot_save","shot_out","shot_block","shot_miss"];
  for(let i=idx-1;i>=0;i--){
   const e=data.events[i];
   // 他チーム・他期間のイベントは遡り判定に混ぜない。
   if(e.side!==targetEvent.side||e.period!==targetEvent.period)continue;
   if(!shotEndTypes.includes(e.type)&&e.type!=="turnover")continue;
-  // GKセーブ／枠外を含むシュート失敗直後のTOは「ー」扱い。
+  // GKセーブ／枠外／ブロック／簡易版シュート失敗直後のTOは「ー」扱い。
   return shotEndTypes.includes(e.type)?"SHOT_END_NOT_TO":"TO";
  }
  return "TO";
@@ -2416,15 +2416,13 @@ function renderTeamKPI(){
   const period=periodFilter.value||"all";
   const events=data.events.filter(e=>(period==="all"||e.period===period));
   const teamEvents=events.filter(e=>e.side===side.key);
-  const detailedShots=teamEvents.filter(e=>shotTypes.includes(e.type));
-  const simpleShotFailures=teamEvents.filter(e=>e.type==="shot_miss").length;
   const goals=teamEvents.filter(e=>e.type==="shot_goal"||e.type==="goal").length;
-  // v18.10.3: 簡易版シュート失敗がある場合は「成功＋簡易失敗」を優先し、
-  // 詳細版失敗イベントとの混在による同一シュートの二重計上を防ぐ。
-  // 簡易版失敗がない場合は従来の詳細版シュート集計を維持する。
-  const shotTotal=simpleShotFailures>0 ? goals+simpleShotFailures : detailedShots.length;
+  // v18.10.4: 簡易版／詳細版の切り替えを廃止し、成功と失敗4種を常に統合して集計。
+  // 失敗イベント：GKセーブ／枠外／ブロック／簡易版シュート失敗。
+  const shotFailures=teamEvents.filter(e=>["shot_save","shot_out","shot_block","shot_miss"].includes(e.type)).length;
+  const shotTotal=goals+shotFailures;
   const teamShotRate=pct(goals,shotTotal);
-  // v18.9.6: ポゼッション=シュート総数（成功+失敗）+シュート失敗を伴わないTO。
+  // v18.10.4: ポゼッション数の式は変更しない（シュート成功＋TO全件）。TO+はシュート失敗4種に続くTOを除外して算出。
   // TO数はシュートで終了しなかったポゼッションのみ。シュート失敗後のTO「-」はTO数に加算しない。
   const correctTurnovers=teamEvents.filter(isClassifiedTurnover).length;
   const correctPossessions=shotTotal+correctTurnovers;
