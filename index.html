@@ -2336,9 +2336,9 @@ function renderScore(){
  });
  document.getElementById("score").textContent=`${h} - ${a}`;
 }
-// v18.9.6: TO識別子を優先認識し、未付与の旧データはイベント履歴から判定。
-// ポゼッション=シュート成功・失敗・正常TO。TO=シュートで終了しなかった攻撃のみ。
-// TO+（シュート失敗を伴わないTO）= TO集計対象 / TOー（シュート失敗後のTO）= TO集計対象外。
+// v18.10.2: TO識別子を優先認識。未付与の記録は同チーム・同期間のイベント履歴を遡って判定。
+// 直前の攻撃がシュート（GKセーブ／枠外を含む）で終了している場合、続くTOは「TOー」としてTO数から除外。
+// TO+（シュート終了イベントを伴わないTO）= TO集計対象 / TOー（シュート終了後のTO）= TO集計対象外。
 function classifyTurnoverEvent(targetEvent){
  if(!targetEvent||targetEvent.type!=="turnover")return "TO";
  const identifier=String(targetEvent.toIdentifier??targetEvent.turnoverIdentifier??"").trim();
@@ -2346,11 +2346,14 @@ function classifyTurnoverEvent(targetEvent){
  if(identifier==="-"||identifier==="TO-"||identifier==="TOー"||identifier==="TO−"||identifier==="TO－")return "SHOT_END_NOT_TO";
  const idx=data.events.indexOf(targetEvent);
  if(idx<0)return "TO";
+ const shotEndTypes=["shot_out","shot_miss","shot_save","shot_block"];
  for(let i=idx-1;i>=0;i--){
   const e=data.events[i];
-  if(e.side!==targetEvent.side)continue;
-  if(!["shot_out","shot_miss","shot_save","shot_block","turnover"].includes(e.type))continue;
-  return ["shot_out","shot_miss","shot_save","shot_block"].includes(e.type)?"SHOT_END_NOT_TO":"TO";
+  // 他チーム・他期間のイベントは遡り判定に混ぜない。
+  if(e.side!==targetEvent.side||e.period!==targetEvent.period)continue;
+  if(!shotEndTypes.includes(e.type)&&e.type!=="turnover")continue;
+  // GKセーブ／枠外を含むシュート失敗直後のTOは「ー」扱い。
+  return shotEndTypes.includes(e.type)?"SHOT_END_NOT_TO":"TO";
  }
  return "TO";
 }
